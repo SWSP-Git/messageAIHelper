@@ -104,8 +104,7 @@ http://<手机IP>:8080/?token=<您的Token>&msg=明天下午3点开会
 
 📄 开源协议 (License)
 
-本项目采用 MIT License 协议开源。
-
-This project is open-sourced under the MIT License.
+本项目采用 [GPL-3.0 License](LICENSE) 协议开源。
+This project is open-sourced under the [GPL-3.0 License](LICENSE).
 
 ---
