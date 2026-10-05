@@ -6,162 +6,170 @@
     android:fitsSystemWindows="true"
     android:paddingTop="50dp">
 
-    <LinearLayout
+    <!-- 内层容器：负责左右留白。努比亚等 ROM 会忽略根布局 padding，
+         必须用内层布局的 layout_margin 才能稳定生效。 -->
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginLeft="30dp"
-        android:layout_marginRight="30dp"
-        android:layout_marginBottom="0dp">
-        0
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="更多设置"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="10dp"/>
-
-        <!-- 1. 后台保活板块 -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="📱 应用后台保活"
-            android:textStyle="bold"
-            android:layout_marginTop="0dp"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="为了保证消息不掉线，请点击下方按钮，手动将本应用加入系统电池优化白名单。"
-            android:textSize="14sp"
-            android:layout_marginTop="5dp"/>
-
-        <Button
-            android:id="@+id/btnBatteryOptimization"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="去设置电池优化" />
-
-        <!-- 2. 定时开关板块 -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="⏰ 服务定时开关"
-            android:textStyle="bold"
-            android:layout_marginTop="5dp"/>
+        android:layout_height="match_parent"
+        android:layout_marginLeft="24dp"
+        android:layout_marginRight="24dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="5dp">
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
 
             <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="启用定时控制" />
-
-            <Switch
-                android:id="@+id/switchSchedule"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-        </LinearLayout>
+                android:layout_height="wrap_content"
+                android:text="更多设置"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp"/>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="5dp">
+            <!-- 1. 后台保活板块 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📱 应用后台保活"
+                android:textStyle="bold"
+                android:layout_marginTop="8dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="为了保证消息不掉线，请点击下方按钮，手动将本应用加入系统电池优化白名单。"
+                android:textSize="14sp"
+                android:layout_marginTop="5dp"/>
+
+            <Button
+                android:id="@+id/btnBatteryOptimization"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="去设置电池优化" />
+
+            <!-- 2. 定时开关板块 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⏰ 服务定时开关"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="5dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="启用定时控制" />
+
+                <Switch
+                    android:id="@+id/switchSchedule"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="5dp">
+
+                <EditText
+                    android:id="@+id/etStartTime"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="起始时间 08:00"
+                    android:inputType="time"
+                    android:minHeight="48dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" 至 "
+                    android:layout_marginHorizontal="10dp"
+                    android:layout_gravity="center_vertical"/>
+
+                <EditText
+                    android:id="@+id/etEndTime"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="结束时间 22:00"
+                    android:inputType="time"
+                    android:minHeight="48dp" />
+            </LinearLayout>
+
+            <!-- 3. 插件端口板块 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🔌 插件/外部端口配置"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="5dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="启用 Webhook 服务" />
+
+                <Switch
+                    android:id="@+id/switchWebhook"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
 
             <EditText
-                android:id="@+id/etStartTime"
-                android:layout_width="0dp"
+                android:id="@+id/etWebhookPort"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:hint="起始时间 08:00"
-                android:inputType="time"
+                android:layout_marginTop="5dp"
+                android:hint="本地监听端口（如 8080）"
+                android:inputType="number"
                 android:minHeight="48dp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" 至 "
-                android:layout_marginHorizontal="10dp"
-                android:layout_gravity="center_vertical"/>
 
             <EditText
-                android:id="@+id/etEndTime"
-                android:layout_width="0dp"
+                android:id="@+id/etWebhookToken"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:hint="结束时间 22:00"
-                android:inputType="time"
+                android:layout_marginTop="5dp"
+                android:hint="通信密钥（Token，请设置复杂一点）"
+                android:inputType="text"
                 android:minHeight="48dp" />
-        </LinearLayout>
 
-        <!-- 3. 插件端口板块 -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="🔌 插件/外部端口配置"
-            android:textStyle="bold"
-            android:layout_marginTop="8dp"/>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="5dp">
-
-            <TextView
-                android:layout_width="0dp"
+            <Button
+                android:id="@+id/btnSaveSettings"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="启用 Webhook 服务" />
+                android:layout_marginTop="16dp"
+                android:text="保存设置" />
 
-            <Switch
-                android:id="@+id/switchWebhook"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+            <Button
+                android:id="@+id/btnViewLogs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="查看运行日志" />
+
         </LinearLayout>
 
-        <EditText
-            android:id="@+id/etWebhookPort"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:hint="本地监听端口（如 8080）"
-            android:inputType="number"
-            android:minHeight="48dp" />
-
-        <EditText
-            android:id="@+id/etWebhookToken"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:hint="通信密钥（Token，请设置复杂一点）"
-            android:inputType="text"
-            android:minHeight="48dp" />
-
-        <Button
-            android:id="@+id/btnSaveSettings"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="保存设置" />
-
-        <Button
-            android:id="@+id/btnViewLogs"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:text="查看运行日志" />
-
-    </LinearLayout>
+    </ScrollView>
 
 </LinearLayout>
