@@ -66,5 +66,8 @@ class SettingsActivity : AppCompatActivity() {
             Toast.makeText(this, "✅ 设置已保存", Toast.LENGTH_SHORT).show()
             finish()
         }
+        findViewById<Button>(R.id.btnViewLogs).setOnClickListener {
+            startActivity(android.content.Intent(this, LogViewerActivity::class.java))
+        }
     }
 }

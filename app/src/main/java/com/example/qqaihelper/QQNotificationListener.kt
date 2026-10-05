@@ -3,10 +3,8 @@ package com.example.qqaihelper
 import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import android.util.Log
 import android.content.Context
 import android.net.ConnectivityManager
-import android.net.Network
 import android.net.NetworkCapabilities
 import fi.iki.elonen.NanoHTTPD
 import kotlinx.coroutines.CoroutineScope
@@ -39,13 +37,15 @@ class QQNotificationListener : NotificationListenerService() {
     // 监听用户是否在设置里更改了 Webhook 状态
     private val prefsListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (key == "webhook_enabled" || key == "webhook_port" || key == "webhook_token") {
-            Log.d("QQ_AI_HELPER", "检测到 Webhook 配置变更，正在重启服务...")
+            AppLogger.d("检测到 Webhook 配置变更，正在重启服务...")
             restartWebhookServer()
         }
     }
 
     override fun onCreate() {
         super.onCreate()
+        // 初始化本地日志记录器
+        AppLogger.init(applicationContext)
         // 注册配置变更监听器
         val prefs = getSharedPreferences("app_settings", android.content.Context.MODE_PRIVATE)
         prefs.registerOnSharedPreferenceChangeListener(prefsListener)
@@ -73,7 +73,7 @@ class QQNotificationListener : NotificationListenerService() {
         val isEnabled = prefs.getBoolean("webhook_enabled", true)
 
         if (!isEnabled) {
-            Log.d("QQ_AI_HELPER", "⏸️ Webhook 服务已手动关闭")
+            AppLogger.d("⏸️ Webhook 服务已手动关闭")
             return
         }
 
@@ -85,9 +85,9 @@ class QQNotificationListener : NotificationListenerService() {
                 processIncomingMessage("外部插件", "外部消息", msg)
             }
             webhookServer?.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false)
-            Log.d("QQ_AI_HELPER", "✅ Webhook 服务器已启动，监听端口: $port")
+            AppLogger.d("✅ Webhook 服务器已启动，监听端口: $port")
         } catch (e: Exception) {
-            Log.e("QQ_AI_HELPER", "❌ Webhook 启动失败: ${e.message}")
+            AppLogger.e("❌ Webhook 启动失败: ${e.message}")
         }
     }
 
@@ -106,7 +106,7 @@ class QQNotificationListener : NotificationListenerService() {
             lastMessageTime = currentTime
             sendToAI(fullMessage, sourceApp)
         } else {
-            Log.d("QQ_AI_HELPER", "重复通知，跳过 AI 请求")
+            AppLogger.d("重复通知，跳过 AI 请求")
         }
     }
 
@@ -155,7 +155,7 @@ class QQNotificationListener : NotificationListenerService() {
 
                 if (!isWithinTime) {
                     // 不在设定的时间段内，直接忽略消息
-                    // Log.d("QQ_AI_HELPER", "当前不在设定时间段内，忽略消息")
+                    // AppLogger.d("当前不在设定时间段内，忽略消息")
                     return
                 }
             } catch (e: Exception) {
@@ -183,15 +183,15 @@ class QQNotificationListener : NotificationListenerService() {
                 else -> "其他应用"
             }
 
-            Log.d("QQ_AI_HELPER", "========== 捕获到消息 ==========")
-            Log.d("QQ_AI_HELPER", "标题: $title")
-            Log.d("QQ_AI_HELPER", "正文: $text")
+            AppLogger.d("========== 捕获到消息 ==========")
+            AppLogger.d("标题: $title")
+            AppLogger.d("正文: $text")
 
             val fullMessage = "$title\n$text"
 
             // 5. 执行关键词过滤（如果未通过则直接返回）
             if (!shouldProcessMessage(packageName, fullMessage)) {
-                Log.d("QQ_AI_HELPER", "消息 [$fullMessage] 未通过关键词过滤，跳过")
+                AppLogger.d("消息 [$fullMessage] 未通过关键词过滤，跳过")
                 return
             }
 
@@ -202,7 +202,7 @@ class QQNotificationListener : NotificationListenerService() {
                 lastMessageTime = currentTime
                 sendToAI(fullMessage, sourceApp)
             } else {
-                Log.d("QQ_AI_HELPER", "重复通知，跳过 AI 请求")
+                AppLogger.d("重复通知，跳过 AI 请求")
             }
         }
     }
@@ -215,10 +215,10 @@ class QQNotificationListener : NotificationListenerService() {
 
             while (attempt < maxRetries && !success) {
                 attempt++
-                Log.d("QQ_AI_HELPER", "========== 第 $attempt 次尝试发送 AI 请求 ==========")
+                AppLogger.d("========== 第 $attempt 次尝试发送 AI 请求 ==========")
 
                 if (!isNetworkAvailable()) {
-                    Log.e("QQ_AI_HELPER", "当前没有网络，跳过请求")
+                    AppLogger.e("当前没有网络，跳过请求")
                     return@launch
                 }
 
@@ -242,7 +242,7 @@ class QQNotificationListener : NotificationListenerService() {
 
                     // 防御性检查：如果 API 配置为空，直接记录日志并终止
                     if (url.isBlank() || key.isBlank() || model.isBlank()) {
-                        Log.e("QQ_AI_HELPER", "❌ 错误：API 配置不完整！请去 App 主界面填写 URL、Key 和模型名称。")
+                        AppLogger.e("❌ 错误：API 配置不完整！请去 App 主界面填写 URL、Key 和模型名称。")
                         return@launch
                     }
                     //组装json数据
@@ -270,23 +270,23 @@ class QQNotificationListener : NotificationListenerService() {
                         val choices = jsonObject.getJSONArray("choices")
                         val aiReply = choices.getJSONObject(0).getJSONObject("message").getString("content")
 
-                        Log.d("QQ_AI_HELPER", "========== AI 处理成功 ==========")
-                        Log.d("QQ_AI_HELPER", "AI 回复内容:\n$aiReply")
+                        AppLogger.d("========== AI 处理成功 ==========")
+                        AppLogger.d("AI 回复内容:\n$aiReply")
 
                         parseAndWriteCalendar(aiReply, sourceApp)
 
                     } else {
-                        Log.e("QQ_AI_HELPER", "AI 请求返回错误码，第 $attempt 次: ${response.code}")
+                        AppLogger.e("AI 请求返回错误码，第 $attempt 次: ${response.code}")
                         if (attempt < maxRetries) delay(5000) // 等待 5 秒后重试
                     }
                 } catch (e: Exception) {
-                    Log.e("QQ_AI_HELPER", "第 $attempt 次网络请求发生异常: ${e.message}")
+                    AppLogger.e("第 $attempt 次网络请求发生异常: ${e.message}")
                     if (attempt < maxRetries) delay(5000) // 等待 5 秒后重试
                 }
             }
 
             if (!success) {
-                Log.e("QQ_AI_HELPER", "❌ 达到最大重试次数 ($maxRetries)，放弃处理该消息。")
+                AppLogger.e("❌ 达到最大重试次数 ($maxRetries)，放弃处理该消息。")
             }
         }
     }
@@ -305,11 +305,11 @@ class QQNotificationListener : NotificationListenerService() {
                 val timeText = timeMatcher.group(1).trim()
 
                 if (todoText != "无" && timeText != "无") {
-                    Log.d("QQ_AI_HELPER", "解析到待办: $todoText, 时间: $timeText，准备写入日历")
+                    AppLogger.d("解析到待办: $todoText, 时间: $timeText，准备写入日历")
 
                     // 检查是否有日历读写权限
                     if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_CALENDAR) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                        Log.e("QQ_AI_HELPER", "没有日历写入权限，请去系统设置里手动授予！")
+                        AppLogger.e("没有日历写入权限，请去系统设置里手动授予！")
                         return
                     }
 
@@ -334,19 +334,19 @@ class QQNotificationListener : NotificationListenerService() {
 
                         val uri = contentResolver.insert(android.provider.CalendarContract.Events.CONTENT_URI, values)
                         if (uri != null) {
-                            Log.d("QQ_AI_HELPER", "✅ 成功写入日历！事件ID: $uri")
+                            AppLogger.d("✅ 成功写入日历！事件ID: $uri")
                         } else {
-                            Log.e("QQ_AI_HELPER", "❌ 写入日历失败，返回为空")
+                            AppLogger.e("❌ 写入日历失败，返回为空")
                         }
                     }
                 } else {
-                    Log.d("QQ_AI_HELPER", "AI 判定当前消息无待办，跳过写入日历")
+                    AppLogger.d("AI 判定当前消息无待办，跳过写入日历")
                 }
             } else {
-                Log.d("QQ_AI_HELPER", "未提取到待办或时间格式不匹配，跳过写入")
+                AppLogger.d("未提取到待办或时间格式不匹配，跳过写入")
             }
         } catch (e: Exception) {
-            Log.e("QQ_AI_HELPER", "解析或写入日历时发生异常: ${e.message}")
+            AppLogger.e("解析或写入日历时发生异常: ${e.message}")
         }
     }
     // 检查手机当前是否有可用网络

@@ -155,6 +155,13 @@
             android:layout_marginTop="10dp"
             android:text="保存设置" />
 
+        <Button
+            android:id="@+id/btnViewLogs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:text="查看运行日志" />
+
     </LinearLayout>
 
 </LinearLayout>

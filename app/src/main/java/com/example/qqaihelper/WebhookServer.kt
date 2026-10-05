@@ -12,7 +12,7 @@ class WebhookServer(port: Int, private val validToken: String, private val onMes
 
         // 2. 核心安全验证：如果密钥不对，直接拒绝！
         if (token != validToken) {
-            Log.e("QQ_AI_HELPER", "Webhook 拒绝访问：密钥错误或缺失")
+            AppLogger.e("Webhook 拒绝访问：密钥错误或缺失")
             return newFixedLengthResponse(Response.Status.UNAUTHORIZED, "text/plain; charset=utf-8", "❌ 密钥错误，拒绝访问")
         }
 
@@ -22,7 +22,7 @@ class WebhookServer(port: Int, private val validToken: String, private val onMes
         }
 
         return if (!msg.isNullOrBlank()) {
-            Log.d("QQ_AI_HELPER", "Webhook 收到外部消息: $msg")
+            AppLogger.d("Webhook 收到外部消息: $msg")
             onMessageReceived(msg)
             newFixedLengthResponse(Response.Status.OK, "text/plain; charset=utf-8", "✅ 消息已成功交给 App 处理")
         } else {
