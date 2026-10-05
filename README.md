@@ -23,12 +23,12 @@ It captures system notifications from apps like WeChat, QQ, DingTalk, etc., in r
 ✨ 核心特性 (Features)
 
 · 📱 多应用通知监听：支持实时监听 QQ、微信、钉钉、企业微信等应用的通知消息。
-· 📱 Multi-App Notification Listening: Supports real-time monitoring of notifications from QQ, WeChat, DingTalk, WeCom, etc.
 · 🤖 AI 智能解析：接入兼容 OpenAI 格式的 API，自动提取发送人、摘要、待办事项及推算日程时间。
 · 📅 静默写入日历：无需 Shizuku 或 MacroDroid，App 原生利用 CalendarContract 实现完全静默的日历写入。
 · 🔍 自定义过滤规则：为每个被监听的应用单独设置关键词过滤（支持“与 (AND)”和“或 (OR)”逻辑）。
 · 🔌 Webhook 开放端口：内置轻量级 HTTP 服务器（基于 NanoHTTPD），支持通过局域网向手机发送指令，实现外部自动化联动。
 · ⏰ 定时开关控制：支持设定时间段，让 App 在指定时间范围内自动开启/暂停服务。
+. 📱 应用内日志查看与分享：无需连接电脑，实时掌握运行状态。
 · 🔒 本地隐私保护：所有配置数据（API Key、过滤规则、Token）仅保存在您的手机本地，无任何云端上传。
 · 📱 Multi-App Notification Listening: Supports real-time monitoring of notifications from QQ, WeChat, DingTalk, WeCom, etc.
 · 🤖 AI-Powered Parsing: Connects to OpenAI-compatible APIs to automatically extract senders, summaries, to-dos, and estimate schedule times.
@@ -36,6 +36,7 @@ It captures system notifications from apps like WeChat, QQ, DingTalk, etc., in r
 · 🔍 Custom Filter Rules: Set keyword filters for each monitored app individually (supports "AND" and "OR" logic).
 · 🔌 Webhook Open Port: Built-in lightweight HTTP server (based on NanoHTTPD). Supports receiving commands via LAN for external automation.
 · ⏰ Scheduled Switch Control: Set a time range for the service to automatically start/pause.
+. 📱In-App Log Viewer & Sharing: Monitor and share app logs without a PC.
 · 🔒 Local Privacy Protection: All configuration data (API Key, filter rules, Token) is stored solely on your local device. No cloud uploads.
 
 ---
