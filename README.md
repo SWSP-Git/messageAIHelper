@@ -4,6 +4,7 @@
 [![Language](https://img.shields.io/badge/Language-Kotlin-blue.svg)](https://kotlinlang.org)
 [![License](https://img.shields.io/badge/License-GPL--3.0-orange.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-1.1.2-brightgreen.svg)](https://github.com/SWSP-Git/messageAIHelper/releases)
+[![Android CI](https://github.com/SWSP-Git/messageAIHelper/actions/workflows/android-ci.yml/badge.svg)](https://github.com/SWSP-Git/messageAIHelper/actions/workflows/android-ci.yml)
 
 > 🔔 捕获通知 · 🤖 AI 智能解析 · 📅 静默写日历 · 📝 智能归档备忘录 · 🌐 中英双语
 
