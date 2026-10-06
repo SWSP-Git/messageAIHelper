@@ -103,28 +103,13 @@
                 android:layout_height="wrap_content" />
         </LinearLayout>
 
-        <LinearLayout
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="end"
-            android:layout_marginTop="24dp">
-
-            <Button
-                android:id="@+id/btnDialogCancel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/dialog_cancel"
-                style="?android:attr/borderlessButtonStyle" />
-
-            <Button
-                android:id="@+id/btnDialogConfirm"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="@string/dialog_confirm"
-                style="?android:attr/borderlessButtonStyle" />
-        </LinearLayout>
+            android:layout_marginTop="20dp"
+            android:text="@string/opt_dialog_hint"
+            android:textSize="12sp"
+            android:textColor="#9E9E9E" />
 
     </LinearLayout>
 </ScrollView>

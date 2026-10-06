@@ -97,6 +97,7 @@
     <string name="opt_dialog_keepalive_desc">通知栏常驻一条通知，降低被系统杀后台的概率</string>
     <string name="opt_dialog_pixel">1 像素悬浮窗</string>
     <string name="opt_dialog_pixel_desc">创建不可见透明窗口，视觉无感，需悬浮窗权限</string>
+    <string name="opt_dialog_hint">开关即时生效，无需保存。点击空白处关闭。</string>
     <string name="opt_battery_already">✅ 已处于电池优化白名单中</string>
     <string name="opt_permission_overlay_toast">请授予悬浮窗权限</string>
     <string name="opt_permission_notification_toast">未授予通知权限，前台服务无法显示通知</string>

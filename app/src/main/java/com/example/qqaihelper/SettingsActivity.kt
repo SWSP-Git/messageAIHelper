@@ -60,6 +60,9 @@ class SettingsActivity : BaseActivity() {
     private lateinit var tvStorageStatus: TextView
     private lateinit var btnGrantStorage: Button
 
+    /** 优化设置弹窗中的「前台服务保活」开关（供权限回调回滚用，弹窗关闭后置空） */
+    private var dialogKeepAliveSwitch: Switch? = null
+
     private val overlayPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
@@ -75,6 +78,14 @@ class SettingsActivity : BaseActivity() {
             startKeepAliveService()
         } else {
             Toast.makeText(this, getString(R.string.opt_permission_notification_toast), Toast.LENGTH_SHORT).show()
+            // 权限被拒：回滚保活开关，避免「开关为 ON 但服务未运行」的矛盾状态
+            prefs.edit().putBoolean("keep_alive_enabled", false).apply()
+            dialogKeepAliveSwitch?.setOnCheckedChangeListener(null)
+            dialogKeepAliveSwitch?.isChecked = false
+            dialogKeepAliveSwitch?.setOnCheckedChangeListener { _, checked ->
+                prefs.edit().putBoolean("keep_alive_enabled", checked).apply()
+                applyKeepAlive(checked)
+            }
         }
     }
 
@@ -314,8 +325,9 @@ class SettingsActivity : BaseActivity() {
         val btnBatteryInDialog = view.findViewById<Button>(R.id.btnBatteryOptInDialog)
         val switchKeepAlive = view.findViewById<Switch>(R.id.switchKeepAlive)
         val switchPixelWindow = view.findViewById<Switch>(R.id.switchPixelWindow)
-        val btnConfirm = view.findViewById<Button>(R.id.btnDialogConfirm)
-        val btnCancel = view.findViewById<Button>(R.id.btnDialogCancel)
+
+        // 记录引用，供通知权限被拒时回滚开关状态
+        dialogKeepAliveSwitch = switchKeepAlive
 
         switchKeepAlive.isChecked = prefs.getBoolean("keep_alive_enabled", false)
         switchPixelWindow.isChecked = prefs.getBoolean("pixel_window_enabled", false)
@@ -324,25 +336,21 @@ class SettingsActivity : BaseActivity() {
             jumpToBatteryOptimizationSettings()
         }
 
+        // 开关即时生效：切换即写入并应用，无需「保存」按钮
+        switchKeepAlive.setOnCheckedChangeListener { _, checked ->
+            prefs.edit().putBoolean("keep_alive_enabled", checked).apply()
+            applyKeepAlive(checked)
+        }
+        switchPixelWindow.setOnCheckedChangeListener { _, checked ->
+            prefs.edit().putBoolean("pixel_window_enabled", checked).apply()
+            applyPixelWindow(checked)
+        }
+
         val dialog = AlertDialog.Builder(this)
             .setView(view)
             .create()
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-
-        btnCancel.setOnClickListener { dialog.dismiss() }
-
-        btnConfirm.setOnClickListener {
-            prefs.edit()
-                .putBoolean("keep_alive_enabled", switchKeepAlive.isChecked)
-                .putBoolean("pixel_window_enabled", switchPixelWindow.isChecked)
-                .apply()
-
-            applyKeepAlive(switchKeepAlive.isChecked)
-            applyPixelWindow(switchPixelWindow.isChecked)
-
-            dialog.dismiss()
-        }
-
+        dialog.setOnDismissListener { dialogKeepAliveSwitch = null }
         dialog.show()
     }
 

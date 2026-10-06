@@ -97,6 +97,7 @@
     <string name="opt_dialog_keepalive_desc">Keeps a persistent notification to reduce being killed by the system</string>
     <string name="opt_dialog_pixel">1-Pixel Overlay</string>
     <string name="opt_dialog_pixel_desc">Creates an invisible overlay to boost process priority; requires overlay permission</string>
+    <string name="opt_dialog_hint">Switches take effect immediately; no save needed. Tap outside to close.</string>
     <string name="opt_battery_already">✅ Already in battery optimization whitelist</string>
     <string name="opt_permission_overlay_toast">Please grant overlay permission</string>
     <string name="opt_permission_notification_toast">Notification permission denied; foreground service notification cannot be shown</string>
