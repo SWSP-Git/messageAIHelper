@@ -29,7 +29,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import java.util.regex.Pattern
 
 /**
  * 核心服务：监听系统通知 → 关键词过滤 → 调用 AI 解析 → 写入日历或备忘录。
@@ -42,15 +41,6 @@ import java.util.regex.Pattern
 class QQNotificationListener : NotificationListenerService() {
 
     companion object {
-        // ---- 预编译正则 ----
-        private val TYPE_PATTERN = Pattern.compile("【类型】(.*?)(?=\\n|$)")
-        private val SUMMARY_PATTERN = Pattern.compile("【摘要】(.*?)(?=\\n|$)")
-        private val KEY_INFO_PATTERN = Pattern.compile("【关键信息】(.*?)(?=\\n|$)")
-        private val IMPORTANCE_PATTERN = Pattern.compile("【重要性】(.*?)(?=\\n|$)")
-        private val SUGGESTION_PATTERN = Pattern.compile("【智能建议】(.*?)(?=\\n|$)")
-        private val TODO_PATTERN = Pattern.compile("【待办】(.*?)(?=\\n|$)")
-        private val TODO_TIME_PATTERN = Pattern.compile("【待办时间】(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})")
-
         // ---- 系统提示词模板 ----
         private val SYSTEM_PROMPT_TEMPLATE = """
             你是一个QQ消息助理。当前的真实时间是：{TIME}。请提取发送人、摘要和待办事项。
@@ -326,17 +316,14 @@ class QQNotificationListener : NotificationListenerService() {
         AppLogger.d("========== AI 处理成功 ==========")
         AppLogger.d("AI 回复内容:\n$aiReply")
 
-        val type = matchFirst(TYPE_PATTERN, aiReply) ?: "日程"
-        val summary = matchFirst(SUMMARY_PATTERN, aiReply) ?: "无摘要"
-        val keyInfo = matchFirst(KEY_INFO_PATTERN, aiReply) ?: "无"
-        val importance = matchFirst(IMPORTANCE_PATTERN, aiReply) ?: "中"
-        var suggestion = matchFirst(SUGGESTION_PATTERN, aiReply) ?: "无"
+        val parsed = AiReplyParser.parse(aiReply)
 
-        if (type == "备忘") {
-            saveMemo(sourceApp, originalMessage, summary, keyInfo, suggestion, importance)
+        if (parsed.isMemo) {
+            saveMemo(sourceApp, originalMessage, parsed.summary, parsed.keyInfo, parsed.suggestion, parsed.importance)
         } else {
             // 日程类型：先尝试解析时间；若开启代码侧冲突检测，追加警告
-            val todoTime = matchFirst(TODO_TIME_PATTERN, aiReply)
+            var suggestion = parsed.suggestion
+            val todoTime = parsed.todoTime
             if (todoTime != null && todoTime != "无") {
                 val mode = prefs.getString(AiOptionsActivity.KEY_SCHEDULE_MODE, AiOptionsActivity.MODE_NONE)
                 if (mode == AiOptionsActivity.MODE_CODE_CHECK) {
@@ -479,8 +466,9 @@ class QQNotificationListener : NotificationListenerService() {
     /** 解析 AI 结果并写入系统日历 */
     private fun parseAndWriteCalendar(aiReply: String, sourceApp: String, suggestion: String) {
         try {
-            val todoText = matchFirst(TODO_PATTERN, aiReply)
-            val timeText = matchFirst(TODO_TIME_PATTERN, aiReply)
+            val parsed = AiReplyParser.parse(aiReply)
+            val todoText = parsed.todoText
+            val timeText = parsed.todoTime
 
             if (todoText == null || timeText == null) {
                 AppLogger.d("未提取到待办或时间格式不匹配")
@@ -607,11 +595,6 @@ class QQNotificationListener : NotificationListenerService() {
         val key = prefs.getString("api_key", "") ?: ""
         val model = prefs.getString("model_name", "") ?: ""
         return Triple(url, key, model)
-    }
-
-    private fun matchFirst(pattern: Pattern, text: String): String? {
-        val matcher = pattern.matcher(text)
-        return if (matcher.find()) (matcher.group(1) ?: "").trim() else null
     }
 
     private fun formatNow(pattern: String): String =
