@@ -1,5 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- 夜间模式下也保持 Light 主题，确保自定义配色不被覆盖 -->
     <style name="Base.Theme.QQAIHelper" parent="Theme.Material3.Light.NoActionBar">
+        <item name="alertDialogTheme">@style/AppAlertDialogTheme</item>
     </style>
 </resources>

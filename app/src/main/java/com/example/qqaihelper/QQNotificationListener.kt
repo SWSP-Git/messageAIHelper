@@ -46,6 +46,7 @@ class QQNotificationListener : NotificationListenerService() {
         private val TYPE_PATTERN = Pattern.compile("【类型】(.*?)(?=\\n|$)")
         private val SUMMARY_PATTERN = Pattern.compile("【摘要】(.*?)(?=\\n|$)")
         private val KEY_INFO_PATTERN = Pattern.compile("【关键信息】(.*?)(?=\\n|$)")
+        private val IMPORTANCE_PATTERN = Pattern.compile("【重要性】(.*?)(?=\\n|$)")
         private val SUGGESTION_PATTERN = Pattern.compile("【智能建议】(.*?)(?=\\n|$)")
         private val TODO_PATTERN = Pattern.compile("【待办】(.*?)(?=\\n|$)")
         private val TODO_TIME_PATTERN = Pattern.compile("【待办时间】(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})")
@@ -91,8 +92,10 @@ class QQNotificationListener : NotificationListenerService() {
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
-        .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
         .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .callTimeout(110, java.util.concurrent.TimeUnit.SECONDS)
+        .protocols(listOf(okhttp3.Protocol.HTTP_1_1))
         .retryOnConnectionFailure(true)
         .build()
 
@@ -246,6 +249,10 @@ class QQNotificationListener : NotificationListenerService() {
                         .post(requestBody)
                         .build()
 
+                    AppLogger.d("请求 URL: $url")
+                    AppLogger.d("请求模型: $model")
+                    AppLogger.d("消息长度: ${message.length} 字符")
+
                     val response = client.newCall(request).execute()
                     val responseBody = response.body?.string() ?: "无响应"
 
@@ -254,10 +261,13 @@ class QQNotificationListener : NotificationListenerService() {
                         handleAiResponse(responseBody, sourceApp, message)
                     } else {
                         AppLogger.e("AI 请求返回错误码，第 $attempt 次: ${response.code}")
+                        AppLogger.e("响应内容: ${responseBody.take(500)}")
                         if (attempt < AI_MAX_RETRIES) delay(AI_RETRY_DELAY_MS)
                     }
                 } catch (e: Exception) {
-                    AppLogger.e("第 $attempt 次网络请求发生异常: ${e.message}")
+                    // 打印异常类型 + 完整堆栈，便于定位问题
+                    AppLogger.e("第 $attempt 次网络请求发生异常: ${e.javaClass.simpleName}: ${e.message}")
+                    AppLogger.e("异常堆栈: " + e.stackTraceToString())
                     if (attempt < AI_MAX_RETRIES) delay(AI_RETRY_DELAY_MS)
                 }
             }
@@ -319,10 +329,11 @@ class QQNotificationListener : NotificationListenerService() {
         val type = matchFirst(TYPE_PATTERN, aiReply) ?: "日程"
         val summary = matchFirst(SUMMARY_PATTERN, aiReply) ?: "无摘要"
         val keyInfo = matchFirst(KEY_INFO_PATTERN, aiReply) ?: "无"
+        val importance = matchFirst(IMPORTANCE_PATTERN, aiReply) ?: "中"
         var suggestion = matchFirst(SUGGESTION_PATTERN, aiReply) ?: "无"
 
         if (type == "备忘") {
-            saveMemo(sourceApp, originalMessage, summary, keyInfo, suggestion)
+            saveMemo(sourceApp, originalMessage, summary, keyInfo, suggestion, importance)
         } else {
             // 日程类型：先尝试解析时间；若开启代码侧冲突检测，追加警告
             val todoTime = matchFirst(TODO_TIME_PATTERN, aiReply)
@@ -432,13 +443,21 @@ class QQNotificationListener : NotificationListenerService() {
     // ==================== 结果处理 ====================
 
     /** 保存备忘录：追加写入文本文件 */
-    private fun saveMemo(source: String, content: String, summary: String, keyInfo: String, suggestion: String) {
+    private fun saveMemo(
+        source: String,
+        content: String,
+        summary: String,
+        keyInfo: String,
+        suggestion: String,
+        importance: String
+    ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val time = formatNow(TIME_FORMAT_DATETIME)
                 val sb = StringBuilder()
                 sb.append("来源: $source\n")
                 sb.append("时间: $time\n")
+                sb.append("重要性: $importance\n")
                 sb.append("摘要: $summary\n")
                 if (keyInfo.isNotBlank() && keyInfo != "无") {
                     sb.append("关键信息: $keyInfo\n")
@@ -448,8 +467,9 @@ class QQNotificationListener : NotificationListenerService() {
                 }
                 sb.append("内容: $content\n\n")
 
-                File(filesDir, MEMO_FILE_NAME).appendText(sb.toString())
-                AppLogger.d("✅ 备忘录已保存: $summary")
+                val memoFile = StorageHelper.getMemoFile(applicationContext)
+                memoFile.appendText(sb.toString())
+                AppLogger.d("✅ 备忘录已保存: ${memoFile.absolutePath}")
             } catch (e: Exception) {
                 AppLogger.e("保存备忘录失败: ${e.message}")
             }

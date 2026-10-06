@@ -8,9 +8,6 @@
     android:paddingTop="60dp"
     android:background="#E8EAED">
 
-    <!-- 内层容器：负责左右留白。
-         注意：努比亚等国产 ROM 会忽略根布局的 padding，
-         必须用内层布局的 layout_margin 才能稳定生效。 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -18,7 +15,6 @@
         android:layout_marginLeft="24dp"
         android:layout_marginRight="24dp">
 
-        <!-- 顶部栏：标题 + 齿轮图标 -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -28,7 +24,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:text="messageAIHelper"
+                android:text="@string/home_title"
                 android:textSize="26sp"
                 android:textStyle="bold"
                 android:textColor="#212121" />
@@ -42,10 +38,10 @@
                 android:padding="12dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_preferences"
+                android:contentDescription="@string/home_settings_cd"
                 app:tint="#757575" />
         </RelativeLayout>
 
-        <!-- 功能入口区块 -->
         <androidx.cardview.widget.CardView
             android:id="@+id/cardMemo"
             android:layout_width="match_parent"
@@ -75,7 +71,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="备忘录"
+                    android:text="@string/home_memo"
                     android:textColor="#0D47A1"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -111,7 +107,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="运行日志"
+                    android:text="@string/home_log"
                     android:textColor="#BF360C"
                     android:textSize="18sp"
                     android:textStyle="bold" />

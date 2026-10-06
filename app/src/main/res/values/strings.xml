@@ -1,3 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">messageAIHelper</string>
+
+    <!-- ================ 主页 ================ -->
+    <string name="home_title">messageAIHelper</string>
+    <string name="home_memo">备忘录</string>
+    <string name="home_log">运行日志</string>
+    <string name="home_settings_cd">设置</string>
+
+    <!-- ================ 配置中心 ================ -->
+    <string name="config_title">配置中心</string>
+    <string name="config_card_ai">🤖 AI 接口配置</string>
+    <string name="config_card_monitor">📩 消息监听配置</string>
+    <string name="config_api_url">API URL</string>
+    <string name="config_api_key">API Key</string>
+    <string name="config_model_name">模型名称</string>
+    <string name="config_api_url_hint">https://api.siliconflow.cn/v1/chat/completions</string>
+    <string name="config_api_key_hint">sk-xxxxxxxx</string>
+    <string name="config_model_hint">deepseek-ai/DeepSeek-V3</string>
+    <string name="config_toggle_key_visibility">显示或隐藏密码</string>
+    <string name="config_enable_service">启用消息监听服务</string>
+    <string name="config_enable_service_desc">关闭后忽略所有通知，不消耗 AI 额度</string>
+    <string name="config_select_apps">📱 选择要监听的应用</string>
+    <string name="config_filter_rules">🔍 配置过滤规则</string>
+    <string name="config_save">保存设置</string>
+    <string name="config_more_settings">⚙️ 更多设置</string>
+    <string name="config_saved_toast">✅ 配置已保存！后台服务将立即使用新配置。</string>
+    <string name="config_service_on">✅ 服务已开启</string>
+    <string name="config_service_off">⏸️ 服务已暂停</string>
+
+    <!-- 应用选择对话框 -->
+    <string name="dialog_select_apps_title">选择要监听的应用</string>
+    <string name="dialog_select_apps_saved">✅ 监听列表已更新，共选中 %1$d 个应用</string>
+    <string name="dialog_filter_rules_title">选择要配置规则的应用</string>
+    <string name="dialog_filter_rules_empty">⚠️ 请先选择要监听的应用！</string>
+    <string name="dialog_filter_editor_title">为 [%1$s] 配置规则</string>
+    <string name="dialog_filter_keyword_hint">请输入关键词</string>
+    <string name="dialog_filter_add_keyword">➕ 添加关键词</string>
+    <string name="dialog_filter_logic_and">逻辑：必须包含所有关键词 (AND)</string>
+    <string name="dialog_filter_logic_or">逻辑：包含任一关键词即可 (OR)</string>
+    <string name="dialog_filter_save_fail">⚠️ 保存失败，至少需要输入一个关键词</string>
+    <string name="dialog_filter_saved">✅ [%1$s] 的过滤规则已保存</string>
+    <string name="dialog_save">保存</string>
+    <string name="dialog_cancel">取消</string>
+    <string name="dialog_later">稍后</string>
+    <string name="dialog_confirm">确定</string>
+
+    <!-- 权限引导 -->
+    <string name="perm_notification_title">需要开启通知使用权</string>
+    <string name="perm_notification_msg">为了自动读取微信、QQ等应用的消息，请在接下来的页面中找到「messageAIHelper」，并打开开关。</string>
+    <string name="perm_notification_goto">去开启</string>
+
+    <!-- ================ 更多设置 ================ -->
+    <string name="settings_title">更多设置</string>
+    <string name="settings_card_keepalive">📱 应用后台保活</string>
+    <string name="settings_card_keepalive_desc">为了保证消息不掉线，请点击下方按钮进入优化设置，可将应用加入系统电池优化白名单，并开启前台服务或悬浮窗保活。</string>
+    <string name="settings_optimize">⚙️ 去优化</string>
+    <string name="settings_card_schedule">⏰ 服务定时开关</string>
+    <string name="settings_enable_schedule">启用定时控制</string>
+    <string name="settings_enable_schedule_desc">仅在指定时段内处理消息</string>
+    <string name="settings_time_to">至</string>
+    <string name="settings_card_webhook">🔌 Webhook 端口配置</string>
+    <string name="settings_enable_webhook">启用 Webhook 服务</string>
+    <string name="settings_enable_webhook_desc">允许局域网设备通过 HTTP 请求投递消息</string>
+    <string name="settings_webhook_port_label">监听端口</string>
+    <string name="settings_webhook_port_hint">8080</string>
+    <string name="settings_webhook_token_label">通信密钥 Token</string>
+    <string name="settings_webhook_token_hint">建议设置复杂一些，如 my_secret_2026</string>
+    <string name="settings_card_language">🌐 语言 / Language</string>
+    <string name="settings_language_label">语言 / Language</string>
+    <string name="settings_save">保存设置</string>
+    <string name="settings_view_logs">📋 查看运行日志</string>
+    <string name="settings_saved_toast">✅ 设置已保存</string>
+
+    <!-- 数据备份 -->
+    <string name="settings_card_backup">💾 数据备份</string>
+    <string name="settings_backup_desc">将备忘录和用户配置导出为 ZIP 文件；或从 ZIP 文件恢复。建议定期备份。</string>
+    <string name="settings_export">📤 导出数据</string>
+    <string name="settings_import">📥 导入数据</string>
+    <string name="backup_export_success">✅ 导出成功</string>
+    <string name="backup_export_fail">❌ 导出失败</string>
+    <string name="backup_import_success">✅ 导入成功，请重启 App 以应用配置</string>
+    <string name="backup_import_fail">❌ 导入失败，请检查文件格式</string>
+
+    <!-- 存储位置提示 -->
+    <string name="settings_card_storage">📁 存储位置</string>
+    <string name="storage_external_ok">✅ 正在使用外部存储（Download/messageAIHelper/），数据不会因卸载而丢失</string>
+    <string name="storage_private_warn">⚠️ 当前使用私有目录，卸载 App 会丢失数据。建议点击下方按钮授予存储权限。</string>
+    <string name="storage_grant">🔓 授予存储权限</string>
+    <string name="storage_granted_toast">✅ 存储权限已授予</string>
+
+    <!-- 优化设置弹窗 -->
+    <string name="opt_dialog_title">优化设置</string>
+    <string name="opt_dialog_battery">去设置电池优化</string>
+    <string name="opt_dialog_keepalive">前台服务保活</string>
+    <string name="opt_dialog_keepalive_desc">通知栏常驻一条通知，降低被系统杀后台的概率</string>
+    <string name="opt_dialog_pixel">1 像素悬浮窗</string>
+    <string name="opt_dialog_pixel_desc">创建不可见透明窗口，视觉无感，需悬浮窗权限</string>
+    <string name="opt_battery_already">✅ 已处于电池优化白名单中</string>
+    <string name="opt_permission_overlay_toast">请授予悬浮窗权限</string>
+    <string name="opt_permission_notification_toast">未授予通知权限，前台服务无法显示通知</string>
+
+    <!-- ================ AI 与日程设置 ================ -->
+    <string name="ai_title">AI 与日程设置</string>
+    <string name="ai_card_model">🤖 模型运行位置</string>
+    <string name="ai_local_model">启用本地模型</string>
+    <string name="ai_local_model_desc">开启后自动断开云端 API，使用设备本地推理（开发中）</string>
+    <string name="ai_card_mode">📅 日程结合模式</string>
+    <string name="ai_mode_none">不结合日程</string>
+    <string name="ai_mode_none_desc">AI 只生成行动建议，不检查日程冲突</string>
+    <string name="ai_mode_code">代码侧冲突检测</string>
+    <string name="ai_mode_code_desc">写入日程前查询前后 30 分钟是否有冲突，有则追加警告</string>
+    <string name="ai_mode_ai">交给 AI 分析</string>
+    <string name="ai_mode_ai_desc">把用户未来日程塞进 prompt，由 AI 自行判断冲突（仅云端模型可用）</string>
+    <string name="ai_card_days">🔢 未来日程查询天数</string>
+    <string name="ai_days_hint">7</string>
+    <string name="ai_days_suffix">天（1-30）</string>
+    <string name="ai_days_note">仅在「交给 AI 分析」模式下生效</string>
+    <string name="ai_save">保存设置</string>
+    <string name="ai_days_invalid">查询天数必须在 %1$d-%2$d 之间</string>
+    <string name="ai_saved_toast">✅ 设置已保存</string>
+
+    <!-- ================ 备忘录 ================ -->
+    <string name="memo_title">备忘录</string>
+    <string name="memo_settings_cd">AI 与日程设置</string>
+    <string name="memo_from">来自：%1$s</string>
+    <string name="memo_summary">摘要：%1$s</string>
+    <string name="memo_content">原文：%1$s</string>
+    <string name="memo_key_info">🔑 %1$s</string>
+    <string name="memo_suggestion">【AI建议】%1$s</string>
+    <string name="memo_unknown">未知</string>
+    <string name="memo_none">无</string>
+    <string name="memo_importance_high">高</string>
+    <string name="memo_importance_medium">中</string>
+    <string name="memo_importance_low">低</string>
+    <string name="memo_show_all">📂 显示全部备忘</string>
+    <string name="memo_show_important">🔍 仅显示重要备忘</string>
+
+    <!-- ================ 日志查看器 ================ -->
+    <string name="log_title">运行日志</string>
+    <string name="log_share">分享</string>
+    <string name="log_clear">清空</string>
+    <string name="log_cleared">日志已清空</string>
+    <string name="log_empty">暂无日志记录</string>
+    <string name="log_share_file_title">分享日志文件</string>
+    <string name="log_share_text_title">分享日志文本</string>
+
+    <!-- ================ 未保存更改保护 ================ -->
+    <string name="unsaved_title">未保存的更改</string>
+    <string name="unsaved_msg_config">当前 API 配置已修改，是否保存后退出？</string>
+    <string name="unsaved_msg_settings">当前设置已修改，是否保存后退出？</string>
+    <string name="unsaved_save">保存</string>
+    <string name="unsaved_discard">不保存</string>
+    <string name="unsaved_cancel">取消</string>
+
+    <!-- ================ 语言选项 ================ -->
+    <string name="lang_option_title">语言 / Language</string>
+    <string name="lang_option_zh">中文</string>
+    <string name="lang_option_en">English</string>
+    <string name="lang_option_system">跟随系统 / Follow System</string>
+
+    <!-- ================ 前台保活通知 ================ -->
+    <string name="keepalive_channel_name">后台保活</string>
+    <string name="keepalive_channel_desc">保持消息监听服务运行，防止被系统回收</string>
+    <string name="keepalive_notif_title">messageAIHelper 运行中</string>
+    <string name="keepalive_notif_content">已处理消息: %1$d 条</string>
 </resources>

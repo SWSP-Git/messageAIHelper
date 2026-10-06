@@ -24,13 +24,12 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="更多设置"
+                android:text="@string/settings_title"
                 android:textSize="26sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
                 android:layout_marginBottom="20dp"/>
 
-            <!-- ================= 卡片 1：后台保活 ================= -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -48,7 +47,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="📱 应用后台保活"
+                        android:text="@string/settings_card_keepalive"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="#1976D2"
@@ -57,7 +56,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="为了保证消息不掉线，请点击下方按钮进入优化设置，可将应用加入系统电池优化白名单，并开启前台服务或悬浮窗保活。"
+                        android:text="@string/settings_card_keepalive_desc"
                         android:textSize="13sp"
                         android:textColor="#757575"
                         android:lineSpacingExtra="4dp"
@@ -68,7 +67,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:minHeight="48dp"
-                        android:text="⚙️ 去优化"
+                        android:text="@string/settings_optimize"
                         android:textColor="#FFFFFF"
                         android:textSize="14sp"
                         android:textStyle="bold"
@@ -78,7 +77,6 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- ================= 卡片 2：定时开关 ================= -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -96,7 +94,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="⏰ 服务定时开关"
+                        android:text="@string/settings_card_schedule"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="#1976D2"
@@ -118,7 +116,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="启用定时控制"
+                                android:text="@string/settings_enable_schedule"
                                 android:textSize="15sp"
                                 android:textColor="#212121"/>
 
@@ -126,7 +124,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="仅在指定时段内处理消息"
+                                android:text="@string/settings_enable_schedule_desc"
                                 android:textSize="12sp"
                                 android:textColor="#9E9E9E"/>
                         </LinearLayout>
@@ -159,7 +157,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="至"
+                            android:text="@string/settings_time_to"
                             android:textSize="14sp"
                             android:textColor="#757575"
                             android:layout_marginHorizontal="10dp"
@@ -181,7 +179,6 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- ================= 卡片 3：Webhook 配置 ================= -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -199,7 +196,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="🔌 Webhook 端口配置"
+                        android:text="@string/settings_card_webhook"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="#1976D2"
@@ -221,7 +218,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="启用 Webhook 服务"
+                                android:text="@string/settings_enable_webhook"
                                 android:textSize="15sp"
                                 android:textColor="#212121"/>
 
@@ -229,7 +226,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="允许局域网设备通过 HTTP 请求投递消息"
+                                android:text="@string/settings_enable_webhook_desc"
                                 android:textSize="12sp"
                                 android:textColor="#9E9E9E"/>
                         </LinearLayout>
@@ -249,7 +246,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="监听端口"
+                        android:text="@string/settings_webhook_port_label"
                         android:textSize="13sp"
                         android:textColor="#757575"
                         android:layout_marginBottom="6dp"/>
@@ -259,7 +256,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:minHeight="48dp"
-                        android:hint="8080"
+                        android:hint="@string/settings_webhook_port_hint"
                         android:inputType="number"
                         android:background="@drawable/input_bg"
                         android:paddingHorizontal="14dp"
@@ -269,7 +266,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="通信密钥 Token"
+                        android:text="@string/settings_webhook_token_label"
                         android:textSize="13sp"
                         android:textColor="#757575"
                         android:layout_marginBottom="6dp"/>
@@ -279,7 +276,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:minHeight="48dp"
-                        android:hint="建议设置复杂一些，如 my_secret_2026"
+                        android:hint="@string/settings_webhook_token_hint"
                         android:inputType="text"
                         android:background="@drawable/input_bg"
                         android:paddingHorizontal="14dp"
@@ -288,13 +285,191 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- ================= 主操作按钮 ================= -->
+            <!-- 语言切换卡片 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_card_language"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#1976D2"
+                        android:layout_marginBottom="12dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_language_label"
+                        android:textSize="15sp"
+                        android:textColor="#212121"
+                        android:layout_marginBottom="10dp"/>
+
+                    <RadioGroup
+                        android:id="@+id/radioGroupLanguage"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <RadioButton
+                            android:id="@+id/radioLangZh"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingVertical="8dp"
+                            android:text="@string/lang_option_zh"
+                            android:textSize="15sp"
+                            android:textColor="#212121"/>
+
+                        <RadioButton
+                            android:id="@+id/radioLangEn"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingVertical="8dp"
+                            android:text="@string/lang_option_en"
+                            android:textSize="15sp"
+                            android:textColor="#212121"/>
+
+                        <RadioButton
+                            android:id="@+id/radioLangSystem"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingVertical="8dp"
+                            android:text="@string/lang_option_system"
+                            android:textSize="15sp"
+                            android:textColor="#212121"/>
+                    </RadioGroup>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 存储位置卡片 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_card_storage"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#1976D2"
+                        android:layout_marginBottom="8dp"/>
+
+                    <TextView
+                        android:id="@+id/tvStorageStatus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/storage_private_warn"
+                        android:textSize="13sp"
+                        android:textColor="#757575"
+                        android:lineSpacingExtra="4dp"
+                        android:layout_marginBottom="12dp"/>
+
+                    <Button
+                        android:id="@+id/btnGrantStorage"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="48dp"
+                        android:text="@string/storage_grant"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:background="@drawable/btn_secondary_selector" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 数据备份卡片 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_card_backup"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#1976D2"
+                        android:layout_marginBottom="8dp"/>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_backup_desc"
+                        android:textSize="13sp"
+                        android:textColor="#757575"
+                        android:lineSpacingExtra="4dp"
+                        android:layout_marginBottom="12dp"/>
+
+                    <Button
+                        android:id="@+id/btnExportData"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="48dp"
+                        android:text="@string/settings_export"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:background="@drawable/btn_secondary_selector" />
+
+                    <Button
+                        android:id="@+id/btnImportData"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="48dp"
+                        android:layout_marginTop="10dp"
+                        android:text="@string/settings_import"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textAllCaps="false"
+                        android:background="@drawable/btn_secondary_selector" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
             <Button
                 android:id="@+id/btnSaveSettings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="52dp"
-                android:text="保存设置"
+                android:text="@string/settings_save"
                 android:textColor="#FFFFFF"
                 android:textSize="16sp"
                 android:textStyle="bold"
@@ -308,7 +483,7 @@
                 android:layout_height="wrap_content"
                 android:minHeight="48dp"
                 android:layout_marginTop="12dp"
-                android:text="📋 查看运行日志"
+                android:text="@string/settings_view_logs"
                 android:textColor="#FFFFFF"
                 android:textSize="14sp"
                 android:textStyle="bold"

@@ -15,7 +15,6 @@
         android:layout_marginLeft="20dp"
         android:layout_marginRight="20dp">
 
-        <!-- 顶部栏：标题 + 齿轮 -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -25,7 +24,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:text="备忘录"
+                android:text="@string/memo_title"
                 android:textSize="26sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"/>
@@ -39,16 +38,32 @@
                 android:padding="12dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_preferences"
-                app:tint="#FFFFFF"
-                android:contentDescription="AI 与日程设置"/>
+                android:contentDescription="@string/memo_settings_cd"
+                app:tint="#FFFFFF"/>
         </RelativeLayout>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewMemos"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:clipToPadding="false"
-            android:paddingBottom="16dp" />
+            android:paddingBottom="8dp" />
+
+        <!-- 底部按钮：显示全部备忘 / 仅显示重要 -->
+        <Button
+            android:id="@+id/btnToggleAllMemos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:text="@string/memo_show_all"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:background="@drawable/btn_secondary_selector" />
 
     </LinearLayout>
 

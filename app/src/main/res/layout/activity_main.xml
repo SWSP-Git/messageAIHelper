@@ -21,17 +21,15 @@
             android:orientation="vertical"
             android:paddingBottom="24dp">
 
-            <!-- 页面标题 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="配置中心"
+                android:text="@string/config_title"
                 android:textSize="26sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
                 android:layout_marginBottom="20dp"/>
 
-            <!-- ================= 卡片 1：AI 接口配置 ================= -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -49,7 +47,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="🤖 AI 接口配置"
+                        android:text="@string/config_card_ai"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="#1976D2"
@@ -58,7 +56,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="API URL"
+                        android:text="@string/config_api_url"
                         android:textSize="13sp"
                         android:textColor="#757575"
                         android:layout_marginBottom="6dp"/>
@@ -73,12 +71,12 @@
                         android:paddingHorizontal="14dp"
                         android:textSize="14sp"
                         android:layout_marginBottom="14dp"
-                        android:hint="https://api.siliconflow.cn/v1/chat/completions" />
+                        android:hint="@string/config_api_url_hint" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="API Key"
+                        android:text="@string/config_api_key"
                         android:textSize="13sp"
                         android:textColor="#757575"
                         android:layout_marginBottom="6dp"/>
@@ -100,7 +98,7 @@
                             android:background="@drawable/input_bg"
                             android:paddingHorizontal="14dp"
                             android:textSize="14sp"
-                            android:hint="sk-xxxxxxxx" />
+                            android:hint="@string/config_api_key_hint" />
 
                         <ImageButton
                             android:id="@+id/btnToggleApiKey"
@@ -109,14 +107,14 @@
                             android:layout_marginStart="8dp"
                             android:background="?attr/selectableItemBackgroundBorderless"
                             android:src="@android:drawable/ic_menu_view"
-                            app:tint="#1976D2"
-                            android:contentDescription="显示或隐藏密码" />
+                            android:contentDescription="@string/config_toggle_key_visibility"
+                            app:tint="#1976D2" />
                     </LinearLayout>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="模型名称"
+                        android:text="@string/config_model_name"
                         android:textSize="13sp"
                         android:textColor="#757575"
                         android:layout_marginBottom="6dp"/>
@@ -130,12 +128,11 @@
                         android:background="@drawable/input_bg"
                         android:paddingHorizontal="14dp"
                         android:textSize="14sp"
-                        android:hint="deepseek-ai/DeepSeek-V3" />
+                        android:hint="@string/config_model_hint" />
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- ================= 卡片 2：消息监听配置 ================= -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -153,7 +150,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="📩 消息监听配置"
+                        android:text="@string/config_card_monitor"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="#1976D2"
@@ -175,7 +172,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="启用消息监听服务"
+                                android:text="@string/config_enable_service"
                                 android:textSize="15sp"
                                 android:textColor="#212121"/>
 
@@ -183,7 +180,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="关闭后忽略所有通知，不消耗 AI 额度"
+                                android:text="@string/config_enable_service_desc"
                                 android:textSize="12sp"
                                 android:textColor="#9E9E9E"/>
                         </LinearLayout>
@@ -206,7 +203,7 @@
                         android:layout_height="wrap_content"
                         android:minHeight="48dp"
                         android:layout_marginTop="8dp"
-                        android:text="📱 选择要监听的应用"
+                        android:text="@string/config_select_apps"
                         android:textColor="#FFFFFF"
                         android:textSize="14sp"
                         android:textStyle="bold"
@@ -219,7 +216,7 @@
                         android:layout_height="wrap_content"
                         android:minHeight="48dp"
                         android:layout_marginTop="10dp"
-                        android:text="🔍 配置过滤规则"
+                        android:text="@string/config_filter_rules"
                         android:textColor="#FFFFFF"
                         android:textSize="14sp"
                         android:textStyle="bold"
@@ -229,13 +226,12 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- ================= 主操作按钮 ================= -->
             <Button
                 android:id="@+id/btnSave"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="52dp"
-                android:text="保存设置"
+                android:text="@string/config_save"
                 android:textColor="#FFFFFF"
                 android:textSize="16sp"
                 android:textStyle="bold"
@@ -249,7 +245,7 @@
                 android:layout_height="wrap_content"
                 android:minHeight="48dp"
                 android:layout_marginTop="12dp"
-                android:text="⚙️ 更多设置"
+                android:text="@string/config_more_settings"
                 android:textColor="#FFFFFF"
                 android:textSize="14sp"
                 android:textStyle="bold"

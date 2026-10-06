@@ -20,6 +20,14 @@
     <!-- 开机自启 -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!-- 备忘录数据持久化：写入公共 Download 目录（避免卸载重装丢失） -->
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -29,6 +37,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:forceDarkAllowed="false"
+        android:usesCleartextTraffic="true"
+        android:localeConfig="@xml/locales_config"
         android:theme="@style/Theme.QQAIHelper">
         <activity
             android:name=".HomeActivity"

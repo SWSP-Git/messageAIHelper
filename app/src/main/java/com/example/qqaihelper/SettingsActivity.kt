@@ -15,27 +15,30 @@ import android.provider.Settings
 import android.view.LayoutInflater
 import android.widget.Button
 import android.widget.EditText
+import android.widget.RadioButton
+import android.widget.RadioGroup
 import android.widget.Switch
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 
 /**
  * 「更多设置」页面。
  *
- * 从 MainActivity 的「更多设置」按钮进入，包含 4 个独立的功能板块：
- * 1. 优化设置（弹窗）：电池优化白名单 + 前台服务保活 + 1 像素悬浮窗（实时保存）
- * 2. 定时开关：只在指定时间段内处理消息
- * 3. Webhook 端口配置：局域网 API 服务
- * 4. 日志查看入口
+ * 包含以下功能板块：
+ * 1. 优化设置（弹窗）：电池优化白名单 + 前台服务保活 + 1 像素悬浮窗
+ * 2. 定时开关
+ * 3. Webhook 端口配置
+ * 4. 语言切换
+ * 5. 存储位置管理 + 数据备份（导出/导入 ZIP）
+ * 6. 日志查看入口
  *
  * 未保存更改保护：
- * 定时开关/Webhook 的输入若修改后未点「保存设置」直接返回，会弹窗询问是否保存。
- * 「去优化」弹窗里的两个开关是实时保存的，不纳入未保存保护范围。
+ * 定时开关/Webhook 的输入若修改后未保存直接返回，会弹窗询问是否保存。
  */
-class SettingsActivity : AppCompatActivity() {
+class SettingsActivity : BaseActivity() {
 
     private lateinit var prefs: android.content.SharedPreferences
 
@@ -47,13 +50,15 @@ class SettingsActivity : AppCompatActivity() {
     private var initialWebhookPort = ""
     private var initialWebhookToken = ""
 
-    // 控件引用（快照对比时需要读取）
+    // 控件引用
     private lateinit var switchSchedule: Switch
     private lateinit var etStartTime: EditText
     private lateinit var etEndTime: EditText
     private lateinit var switchWebhook: Switch
     private lateinit var etWebhookPort: EditText
     private lateinit var etWebhookToken: EditText
+    private lateinit var tvStorageStatus: TextView
+    private lateinit var btnGrantStorage: Button
 
     private val overlayPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -69,8 +74,50 @@ class SettingsActivity : AppCompatActivity() {
         if (granted) {
             startKeepAliveService()
         } else {
-            Toast.makeText(this, "未授予通知权限，前台服务无法显示通知", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.opt_permission_notification_toast), Toast.LENGTH_SHORT).show()
         }
+    }
+
+    /** 请求"所有文件访问权限"（Android 11+）或 WRITE_EXTERNAL_STORAGE（旧版） */
+    private val storagePermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        updateStorageStatus()
+    }
+
+    private val legacyStoragePermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            Toast.makeText(this, getString(R.string.storage_granted_toast), Toast.LENGTH_SHORT).show()
+        }
+        updateStorageStatus()
+    }
+
+    /** 导出数据的文件选择器 */
+    private val exportLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri: Uri? ->
+        if (uri == null) return@registerForActivityResult
+        val ok = DataExporter.export(this, uri)
+        Toast.makeText(
+            this,
+            getString(if (ok) R.string.backup_export_success else R.string.backup_export_fail),
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
+    /** 导入数据的文件选择器 */
+    private val importLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri == null) return@registerForActivityResult
+        val ok = DataImporter.import(this, uri)
+        Toast.makeText(
+            this,
+            getString(if (ok) R.string.backup_import_success else R.string.backup_import_fail),
+            Toast.LENGTH_LONG
+        ).show()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,6 +135,8 @@ class SettingsActivity : AppCompatActivity() {
         switchWebhook = findViewById(R.id.switchWebhook)
         etWebhookToken = findViewById(R.id.etWebhookToken)
         val btnSaveSettings = findViewById<Button>(R.id.btnSaveSettings)
+        tvStorageStatus = findViewById(R.id.tvStorageStatus)
+        btnGrantStorage = findViewById(R.id.btnGrantStorage)
 
         // ---------- 2. 加载已有配置 ----------
         switchSchedule.isChecked = prefs.getBoolean("schedule_enabled", false)
@@ -97,7 +146,6 @@ class SettingsActivity : AppCompatActivity() {
         switchWebhook.isChecked = prefs.getBoolean("webhook_enabled", false)
         etWebhookToken.setText(prefs.getString("webhook_token", ""))
 
-        // 记录初始快照
         snapshotCurrentState()
 
         // ---------- 3. 「去优化」按钮 ----------
@@ -105,19 +153,36 @@ class SettingsActivity : AppCompatActivity() {
             showOptimizationDialog()
         }
 
-        // ---------- 4. 保存所有设置 ----------
+        // ---------- 4. 语言切换 ----------
+        setupLanguageRadio()
+
+        // ---------- 5. 存储位置管理 ----------
+        updateStorageStatus()
+        btnGrantStorage.setOnClickListener {
+            requestStoragePermission()
+        }
+
+        // ---------- 6. 导出 / 导入 ----------
+        findViewById<Button>(R.id.btnExportData).setOnClickListener {
+            exportLauncher.launch(DataExporter.suggestFileName())
+        }
+        findViewById<Button>(R.id.btnImportData).setOnClickListener {
+            importLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
+        }
+
+        // ---------- 7. 保存所有设置 ----------
         btnSaveSettings.setOnClickListener {
             saveSettings()
-            Toast.makeText(this, "✅ 设置已保存", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.settings_saved_toast), Toast.LENGTH_SHORT).show()
             finish()
         }
 
-        // ---------- 5. 日志查看入口 ----------
+        // ---------- 8. 日志查看入口 ----------
         findViewById<Button>(R.id.btnViewLogs).setOnClickListener {
             startActivity(Intent(this, LogViewerActivity::class.java))
         }
 
-        // ---------- 6. 返回键拦截 ----------
+        // ---------- 9. 返回键拦截 ----------
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (hasUnsavedChanges()) {
@@ -128,6 +193,71 @@ class SettingsActivity : AppCompatActivity() {
                 }
             }
         })
+    }
+
+    // ==================== 存储位置管理 ====================
+
+    /** 刷新存储位置的 UI 状态 */
+    private fun updateStorageStatus() {
+        val usingExternal = StorageHelper.isUsingExternalStorage(this)
+        if (usingExternal) {
+            tvStorageStatus.text = getString(R.string.storage_external_ok)
+            tvStorageStatus.setTextColor(Color.parseColor("#00C853"))
+            btnGrantStorage.visibility = Button.GONE
+        } else {
+            tvStorageStatus.text = getString(R.string.storage_private_warn)
+            tvStorageStatus.setTextColor(Color.parseColor("#D32F2F"))
+            btnGrantStorage.visibility = Button.VISIBLE
+        }
+    }
+
+    /**
+     * 申请存储权限。
+     *
+     * Android 11+：跳转到"所有文件访问权限"系统设置页
+     * Android 10 及以下：弹出 WRITE_EXTERNAL_STORAGE 运行时权限对话框
+     */
+    private fun requestStoragePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            try {
+                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                    data = Uri.parse("package:$packageName")
+                }
+                storagePermissionLauncher.launch(intent)
+            } catch (e: Exception) {
+                // 某些 ROM 不支持 app-specific 的入口，降级到全局入口
+                val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                storagePermissionLauncher.launch(intent)
+            }
+        } else {
+            legacyStoragePermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }
+    }
+
+    // ==================== 语言切换 ====================
+
+    private fun setupLanguageRadio() {
+        val radioGroup = findViewById<RadioGroup>(R.id.radioGroupLanguage)
+        val radioZh = findViewById<RadioButton>(R.id.radioLangZh)
+        val radioEn = findViewById<RadioButton>(R.id.radioLangEn)
+        val radioSystem = findViewById<RadioButton>(R.id.radioLangSystem)
+
+        when (LocaleHelper.getCurrentLanguage()) {
+            LocaleHelper.LANG_ZH -> radioZh.isChecked = true
+            LocaleHelper.LANG_EN -> radioEn.isChecked = true
+            else -> radioSystem.isChecked = true
+        }
+
+        radioGroup.setOnCheckedChangeListener { _, checkedId ->
+            val lang = when (checkedId) {
+                R.id.radioLangZh -> LocaleHelper.LANG_ZH
+                R.id.radioLangEn -> LocaleHelper.LANG_EN
+                else -> LocaleHelper.LANG_SYSTEM
+            }
+            if (lang != LocaleHelper.getCurrentLanguage()) {
+                LocaleHelper.setLanguage(this, lang)
+            }
+        }
     }
 
     // ==================== 未保存更改保护 ====================
@@ -152,20 +282,19 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun showUnsavedChangesDialog() {
         AlertDialog.Builder(this)
-            .setTitle("未保存的更改")
-            .setMessage("当前设置已修改，是否保存后退出？")
-            .setPositiveButton("保存") { _, _ ->
+            .setTitle(R.string.unsaved_title)
+            .setMessage(R.string.unsaved_msg_settings)
+            .setPositiveButton(R.string.unsaved_save) { _, _ ->
                 saveSettings()
                 finish()
             }
-            .setNegativeButton("不保存") { _, _ ->
+            .setNegativeButton(R.string.unsaved_discard) { _, _ ->
                 finish()
             }
-            .setNeutralButton("取消", null)
+            .setNeutralButton(R.string.unsaved_cancel, null)
             .show()
     }
 
-    /** 统一保存设置并刷新快照 */
     private fun saveSettings() {
         prefs.edit()
             .putBoolean("schedule_enabled", switchSchedule.isChecked)
@@ -175,7 +304,6 @@ class SettingsActivity : AppCompatActivity() {
             .putBoolean("webhook_enabled", switchWebhook.isChecked)
             .putString("webhook_token", etWebhookToken.text.toString().trim())
             .apply()
-        // 保存后刷新快照，避免返回时再次提示
         snapshotCurrentState()
     }
 
@@ -227,7 +355,7 @@ class SettingsActivity : AppCompatActivity() {
             }
             startActivity(intent)
         } else {
-            Toast.makeText(this, "✅ 已处于电池优化白名单中", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.opt_battery_already), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -262,7 +390,7 @@ class SettingsActivity : AppCompatActivity() {
             if (Settings.canDrawOverlays(this)) {
                 PixelWindowManager.show(this)
             } else {
-                Toast.makeText(this, "请授予悬浮窗权限", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.opt_permission_overlay_toast), Toast.LENGTH_SHORT).show()
                 val intent = Intent(
                     Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:$packageName")

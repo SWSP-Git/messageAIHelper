@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">messageAIHelper</string>
+
+    <!-- Home -->
+    <string name="home_title">messageAIHelper</string>
+    <string name="home_memo">Memos</string>
+    <string name="home_log">Logs</string>
+    <string name="home_settings_cd">Settings</string>
+
+    <!-- Config Center -->
+    <string name="config_title">Configuration</string>
+    <string name="config_card_ai">🤖 AI API Configuration</string>
+    <string name="config_card_monitor">📩 Message Monitoring</string>
+    <string name="config_api_url">API URL</string>
+    <string name="config_api_key">API Key</string>
+    <string name="config_model_name">Model Name</string>
+    <string name="config_api_url_hint">https://api.siliconflow.cn/v1/chat/completions</string>
+    <string name="config_api_key_hint">sk-xxxxxxxx</string>
+    <string name="config_model_hint">deepseek-ai/DeepSeek-V3</string>
+    <string name="config_toggle_key_visibility">Show or hide password</string>
+    <string name="config_enable_service">Enable Message Monitoring</string>
+    <string name="config_enable_service_desc">Ignore all notifications when off; no AI quota consumed</string>
+    <string name="config_select_apps">📱 Select Apps to Monitor</string>
+    <string name="config_filter_rules">🔍 Configure Filter Rules</string>
+    <string name="config_save">Save</string>
+    <string name="config_more_settings">⚙️ More Settings</string>
+    <string name="config_saved_toast">✅ Configuration saved! Background service will use it immediately.</string>
+    <string name="config_service_on">✅ Service enabled</string>
+    <string name="config_service_off">⏸️ Service paused</string>
+
+    <!-- App selection dialog -->
+    <string name="dialog_select_apps_title">Select Apps to Monitor</string>
+    <string name="dialog_select_apps_saved">✅ Monitoring list updated: %1$d apps selected</string>
+    <string name="dialog_filter_rules_title">Select App to Configure</string>
+    <string name="dialog_filter_rules_empty">⚠️ Please select apps to monitor first!</string>
+    <string name="dialog_filter_editor_title">Configure rules for [%1$s]</string>
+    <string name="dialog_filter_keyword_hint">Enter keyword</string>
+    <string name="dialog_filter_add_keyword">➕ Add Keyword</string>
+    <string name="dialog_filter_logic_and">Logic: Match ALL keywords (AND)</string>
+    <string name="dialog_filter_logic_or">Logic: Match ANY keyword (OR)</string>
+    <string name="dialog_filter_save_fail">⚠️ Save failed: at least one keyword required</string>
+    <string name="dialog_filter_saved">✅ Rules for [%1$s] saved</string>
+    <string name="dialog_save">Save</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_later">Later</string>
+    <string name="dialog_confirm">OK</string>
+
+    <!-- Permissions -->
+    <string name="perm_notification_title">Notification Access Required</string>
+    <string name="perm_notification_msg">To read messages from WeChat, QQ, etc., find "messageAIHelper" in the next page and enable the toggle.</string>
+    <string name="perm_notification_goto">Enable</string>
+
+    <!-- More Settings -->
+    <string name="settings_title">More Settings</string>
+    <string name="settings_card_keepalive">📱 Background Keep-Alive</string>
+    <string name="settings_card_keepalive_desc">To ensure messages are not missed, tap below to add the app to the battery optimization whitelist and enable foreground service or overlay keep-alive.</string>
+    <string name="settings_optimize">⚙️ Optimize</string>
+    <string name="settings_card_schedule">⏰ Schedule Control</string>
+    <string name="settings_enable_schedule">Enable Schedule</string>
+    <string name="settings_enable_schedule_desc">Only process messages within the specified period</string>
+    <string name="settings_time_to">to</string>
+    <string name="settings_card_webhook">🔌 Webhook Port Configuration</string>
+    <string name="settings_enable_webhook">Enable Webhook Service</string>
+    <string name="settings_enable_webhook_desc">Allow LAN devices to POST messages via HTTP</string>
+    <string name="settings_webhook_port_label">Listen Port</string>
+    <string name="settings_webhook_port_hint">8080</string>
+    <string name="settings_webhook_token_label">Auth Token</string>
+    <string name="settings_webhook_token_hint">Use a complex one, e.g. my_secret_2026</string>
+    <string name="settings_card_language">🌐 Language / 语言</string>
+    <string name="settings_language_label">Language / 语言</string>
+    <string name="settings_save">Save</string>
+    <string name="settings_view_logs">📋 View Runtime Logs</string>
+    <string name="settings_saved_toast">✅ Settings saved</string>
+
+    <!-- Backup -->
+    <string name="settings_card_backup">💾 Data Backup</string>
+    <string name="settings_backup_desc">Export memos and user config as a ZIP file, or restore from a ZIP backup. Regular backup is recommended.</string>
+    <string name="settings_export">📤 Export Data</string>
+    <string name="settings_import">📥 Import Data</string>
+    <string name="backup_export_success">✅ Export successful</string>
+    <string name="backup_export_fail">❌ Export failed</string>
+    <string name="backup_import_success">✅ Import successful. Please restart the app to apply config.</string>
+    <string name="backup_import_fail">❌ Import failed. Please check the file format.</string>
+
+    <!-- Storage location -->
+    <string name="settings_card_storage">📁 Storage Location</string>
+    <string name="storage_external_ok">✅ Using external storage (Download/messageAIHelper/). Data survives uninstallation.</string>
+    <string name="storage_private_warn">⚠️ Currently using private directory. Data will be lost if the app is uninstalled. Tap below to grant storage permission.</string>
+    <string name="storage_grant">🔓 Grant Storage Permission</string>
+    <string name="storage_granted_toast">✅ Storage permission granted</string>
+
+    <!-- Optimization dialog -->
+    <string name="opt_dialog_title">Optimization</string>
+    <string name="opt_dialog_battery">Battery Optimization Settings</string>
+    <string name="opt_dialog_keepalive">Foreground Service</string>
+    <string name="opt_dialog_keepalive_desc">Keeps a persistent notification to reduce being killed by the system</string>
+    <string name="opt_dialog_pixel">1-Pixel Overlay</string>
+    <string name="opt_dialog_pixel_desc">Creates an invisible overlay to boost process priority; requires overlay permission</string>
+    <string name="opt_battery_already">✅ Already in battery optimization whitelist</string>
+    <string name="opt_permission_overlay_toast">Please grant overlay permission</string>
+    <string name="opt_permission_notification_toast">Notification permission denied; foreground service notification cannot be shown</string>
+
+    <!-- AI & Schedule Settings -->
+    <string name="ai_title">AI &amp; Schedule</string>
+    <string name="ai_card_model">🤖 Model Location</string>
+    <string name="ai_local_model">Enable Local Model</string>
+    <string name="ai_local_model_desc">Disconnects cloud API and uses on-device inference (WIP)</string>
+    <string name="ai_card_mode">📅 Schedule Integration Mode</string>
+    <string name="ai_mode_none">No Integration</string>
+    <string name="ai_mode_none_desc">AI only generates suggestions; no conflict check</string>
+    <string name="ai_mode_code">Code-Side Conflict Check</string>
+    <string name="ai_mode_code_desc">Queries ±30 min before writing; appends a warning if conflict found</string>
+    <string name="ai_mode_ai">AI Analysis</string>
+    <string name="ai_mode_ai_desc">Feeds upcoming events into prompt for AI to detect conflicts (cloud model only)</string>
+    <string name="ai_card_days">🔢 Lookahead Days</string>
+    <string name="ai_days_hint">7</string>
+    <string name="ai_days_suffix">days (1-30)</string>
+    <string name="ai_days_note">Only effective in "AI Analysis" mode</string>
+    <string name="ai_save">Save</string>
+    <string name="ai_days_invalid">Lookahead days must be between %1$d and %2$d</string>
+    <string name="ai_saved_toast">✅ Settings saved</string>
+
+    <!-- Memo -->
+    <string name="memo_title">Memos</string>
+    <string name="memo_settings_cd">AI &amp; Schedule Settings</string>
+    <string name="memo_from">From: %1$s</string>
+    <string name="memo_summary">Summary: %1$s</string>
+    <string name="memo_content">Original: %1$s</string>
+    <string name="memo_key_info">🔑 %1$s</string>
+    <string name="memo_suggestion">[AI Suggestion] %1$s</string>
+    <string name="memo_unknown">Unknown</string>
+    <string name="memo_none">None</string>
+    <string name="memo_importance_high">HIGH</string>
+    <string name="memo_importance_medium">MED</string>
+    <string name="memo_importance_low">LOW</string>
+    <string name="memo_show_all">📂 Show All Memos</string>
+    <string name="memo_show_important">🔍 Show Important Only</string>
+
+    <!-- Log Viewer -->
+    <string name="log_title">Runtime Logs</string>
+    <string name="log_share">Share</string>
+    <string name="log_clear">Clear</string>
+    <string name="log_cleared">Logs cleared</string>
+    <string name="log_empty">No logs yet</string>
+    <string name="log_share_file_title">Share log file</string>
+    <string name="log_share_text_title">Share log text</string>
+
+    <!-- Unsaved changes -->
+    <string name="unsaved_title">Unsaved Changes</string>
+    <string name="unsaved_msg_config">API configuration has been modified. Save before leaving?</string>
+    <string name="unsaved_msg_settings">Settings have been modified. Save before leaving?</string>
+    <string name="unsaved_save">Save</string>
+    <string name="unsaved_discard">Discard</string>
+    <string name="unsaved_cancel">Cancel</string>
+
+    <!-- Language -->
+    <string name="lang_option_title">Language / 语言</string>
+    <string name="lang_option_zh">中文</string>
+    <string name="lang_option_en">English</string>
+    <string name="lang_option_system">Follow System / 跟随系统</string>
+
+    <!-- Keep-Alive notification -->
+    <string name="keepalive_channel_name">Keep-Alive</string>
+    <string name="keepalive_channel_desc">Keeps the message monitoring service running</string>
+    <string name="keepalive_notif_title">messageAIHelper Running</string>
+    <string name="keepalive_notif_content">Processed: %1$d messages</string>
+</resources>

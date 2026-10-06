@@ -10,24 +10,21 @@
         android:background="@drawable/dialog_bg"
         android:padding="24dp">
 
-        <!-- 标题 -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="优化设置"
+            android:text="@string/opt_dialog_title"
             android:textSize="20sp"
             android:textStyle="bold"
             android:textColor="#212121"
             android:layout_marginBottom="16dp" />
 
-        <!-- 电池优化入口按钮 -->
         <Button
             android:id="@+id/btnBatteryOptInDialog"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="去设置电池优化" />
+            android:text="@string/opt_dialog_battery" />
 
-        <!-- 分隔线 -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
@@ -35,7 +32,6 @@
             android:layout_marginTop="20dp"
             android:layout_marginBottom="16dp" />
 
-        <!-- 前台服务保活 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -51,7 +47,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="前台服务保活"
+                    android:text="@string/opt_dialog_keepalive"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="#212121" />
@@ -60,7 +56,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="通知栏常驻一条通知，降低被系统杀后台的概率"
+                    android:text="@string/opt_dialog_keepalive_desc"
                     android:textSize="12sp"
                     android:textColor="#757575" />
             </LinearLayout>
@@ -71,7 +67,6 @@
                 android:layout_height="wrap_content" />
         </LinearLayout>
 
-        <!-- 1 像素悬浮窗 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -88,7 +83,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="1 像素悬浮窗"
+                    android:text="@string/opt_dialog_pixel"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="#212121" />
@@ -97,7 +92,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="创建不可见透明窗口，视觉无感，需悬浮窗权限"
+                    android:text="@string/opt_dialog_pixel_desc"
                     android:textSize="12sp"
                     android:textColor="#757575" />
             </LinearLayout>
@@ -108,7 +103,6 @@
                 android:layout_height="wrap_content" />
         </LinearLayout>
 
-        <!-- 底部按钮 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -120,7 +114,7 @@
                 android:id="@+id/btnDialogCancel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="取消"
+                android:text="@string/dialog_cancel"
                 style="?android:attr/borderlessButtonStyle" />
 
             <Button
@@ -128,7 +122,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:text="确定"
+                android:text="@string/dialog_confirm"
                 style="?android:attr/borderlessButtonStyle" />
         </LinearLayout>
 

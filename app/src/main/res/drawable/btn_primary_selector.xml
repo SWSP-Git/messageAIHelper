@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_pressed="true" android:drawable="@drawable/btn_primary_bg_pressed" />
-    <item android:drawable="@drawable/btn_primary_bg" />
-</selector>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#40FFFFFF">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#2979FF" />
+            <corners android:radius="12dp" />
+        </shape>
+    </item>
+</ripple>
