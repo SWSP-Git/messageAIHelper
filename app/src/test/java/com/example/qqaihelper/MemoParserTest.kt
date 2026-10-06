@@ -119,6 +119,46 @@ class MemoParserTest {
         assertFalse(MemoParser.isLowImportance(listOf("来源: QQ")))
     }
 
+    // ---------- extractMultiline（「内容」多行字段） ----------
+
+    @Test
+    fun extractMultiline_contentWithTitleAndBody_returnsFullText() {
+        // saveMemo 写入的「内容」= 标题 + "\n" + 正文，必然跨两行
+        val lines = listOf(
+            "来源: 微信",
+            "摘要: 开会通知",
+            "内容: 项目群",
+            "明天下午三点开会，地点在 3 楼会议室"
+        )
+
+        val actual = MemoParser.extractMultiline(lines, "内容")
+
+        assertEquals("项目群\n明天下午三点开会，地点在 3 楼会议室", actual)
+    }
+
+    @Test
+    fun extractMultiline_singleLineContent_returnsThatLine() {
+        val lines = listOf("来源: QQ", "内容: 只有一行")
+
+        assertEquals("只有一行", MemoParser.extractMultiline(lines, "内容"))
+    }
+
+    @Test
+    fun extractMultiline_missingField_returnsNull() {
+        assertNull(MemoParser.extractMultiline(listOf("来源: QQ"), "内容"))
+    }
+
+    @Test
+    fun extractMultiline_multiParagraphBody_keepsAllLines() {
+        val lines = listOf(
+            "内容: 标题",
+            "第一段",
+            "第二段"
+        )
+
+        assertEquals("标题\n第一段\n第二段", MemoParser.extractMultiline(lines, "内容"))
+    }
+
     // ---------- filter ----------
 
     @Test

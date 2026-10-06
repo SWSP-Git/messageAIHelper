@@ -67,9 +67,10 @@ class MemoAdapter(private val memoList: List<String>) : RecyclerView.Adapter<Mem
             R.string.memo_summary,
             extract(lines, "摘要") ?: ctx.getString(R.string.memo_none)
         )
+        // 「内容」是多行字段（标题 + 正文），需用 extractMultiline 取完整原文
         holder.tvContent.text = ctx.getString(
             R.string.memo_content,
-            extract(lines, "内容") ?: ""
+            MemoParser.extractMultiline(lines, "内容") ?: ""
         )
 
         // 重要性标签（高/中/低，带背景色）

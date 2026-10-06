@@ -56,6 +56,27 @@ object MemoParser {
             ?.trim()
 
     /**
+     * 提取多行字段值（如「内容」）。
+     *
+     * 「内容」保存的是原消息的「标题\n正文」，值本身跨行，因此不能只取首行。
+     * 此方法从字段所在行开始，一直取到列表末尾。
+     *
+     * 约定：多行字段必须是该条备忘的**最后一个字段**（saveMemo 正是此顺序）。
+     *
+     * @param lines  备忘文本按 "\n" 切分后的行列表
+     * @param prefix 字段前缀（不含冒号）
+     * @return 冒号后内容 + 后续所有行（用 \n 连接）；字段不存在返回 null
+     */
+    fun extractMultiline(lines: List<String>, prefix: String): String? {
+        val index = lines.indexOfFirst { it.startsWith("$prefix:") }
+        if (index < 0) return null
+
+        val firstLine = lines[index].substringAfter(":").trim()
+        val restLines = lines.subList(index + 1, lines.size)
+        return (listOf(firstLine) + restLines).joinToString("\n").trim()
+    }
+
+    /**
      * 读取一条备忘的重要性。
      *
      * 兼容策略：字段缺失或为空时返回「中」，保证老数据（v1.1.2 之前无
