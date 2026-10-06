@@ -10,3 +10,5 @@
 .cxx
 local.properties
 /app/release/
+# 临时外源分支/模型资源（本地专用，不入库）
+/外源分支项目/
