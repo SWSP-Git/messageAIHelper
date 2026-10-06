@@ -319,7 +319,7 @@ class QQNotificationListener : NotificationListenerService() {
         val parsed = AiReplyParser.parse(aiReply)
 
         if (parsed.isMemo) {
-            saveMemo(sourceApp, originalMessage, parsed.summary, parsed.keyInfo, parsed.suggestion, parsed.importance)
+            saveMemo(sourceApp, parsed.sender, originalMessage, parsed.summary, parsed.keyInfo, parsed.suggestion, parsed.importance)
         } else {
             // 日程类型：先尝试解析时间；若开启代码侧冲突检测，追加警告
             var suggestion = parsed.suggestion
@@ -429,9 +429,20 @@ class QQNotificationListener : NotificationListenerService() {
 
     // ==================== 结果处理 ====================
 
-    /** 保存备忘录：追加写入文本文件 */
+    /**
+     * 保存备忘录：追加写入文本文件。
+     *
+     * @param source     来源应用（如 "QQ"）
+     * @param sender     AI 提取的发送人（如 "张三"）；为 null 时不写入该字段
+     * @param content    原始消息文本
+     * @param summary    摘要
+     * @param keyInfo    关键信息
+     * @param suggestion 智能建议
+     * @param importance 重要性
+     */
     private fun saveMemo(
         source: String,
+        sender: String?,
         content: String,
         summary: String,
         keyInfo: String,
@@ -443,6 +454,10 @@ class QQNotificationListener : NotificationListenerService() {
                 val time = formatNow(TIME_FORMAT_DATETIME)
                 val sb = StringBuilder()
                 sb.append("来源: $source\n")
+                // 发送人：AI 未提取到时省略该字段，保证与老数据格式兼容
+                if (!sender.isNullOrBlank() && sender != "无") {
+                    sb.append("发送人: $sender\n")
+                }
                 sb.append("时间: $time\n")
                 sb.append("重要性: $importance\n")
                 sb.append("摘要: $summary\n")
@@ -525,30 +540,10 @@ class QQNotificationListener : NotificationListenerService() {
 
     // ==================== 辅助函数 ====================
 
-    /** 关键词过滤（支持 AND / OR） */
+    /** 关键词过滤（支持 AND / OR）；规则解析委托给纯逻辑 MessageFilter */
     private fun shouldProcessMessage(sourceApp: String, messageText: String): Boolean {
         val rulesString = prefs.getString("filter_rules", "") ?: ""
-        if (rulesString.isEmpty()) return true
-
-        val packageName = when (sourceApp) {
-            "QQ" -> "com.tencent.mobileqq"
-            "微信" -> "com.tencent.mm"
-            "钉钉" -> "com.alibaba.android.rimet"
-            "企业微信" -> "com.tencent.wework"
-            else -> return true
-        }
-
-        for (line in rulesString.split("\n")) {
-            val parts = line.split("|")
-            if (parts.size < 3 || parts[0] != packageName) continue
-
-            val keywords = parts[1].split(",")
-            val logic = parts[2].trim().uppercase()
-            val matchCount = keywords.count { messageText.contains(it.trim()) }
-
-            return if (logic == "AND") matchCount == keywords.size else matchCount > 0
-        }
-        return true
+        return MessageFilter.shouldProcess(sourceApp, messageText, rulesString)
     }
 
     private fun isNetworkAvailable(): Boolean {
@@ -561,34 +556,14 @@ class QQNotificationListener : NotificationListenerService() {
     private fun isWithinSchedule(): Boolean {
         if (!prefs.getBoolean("schedule_enabled", false)) return true
 
-        val startTimeStr = prefs.getString("schedule_start", "08:00") ?: "08:00"
-        val endTimeStr = prefs.getString("schedule_end", "22:00") ?: "22:00"
+        val startTimeStr = prefs.getString("schedule_start", ScheduleWindow.DEFAULT_START) ?: ScheduleWindow.DEFAULT_START
+        val endTimeStr = prefs.getString("schedule_end", ScheduleWindow.DEFAULT_END) ?: ScheduleWindow.DEFAULT_END
 
-        return try {
-            val nowStr = formatNow("HH:mm")
-            val nowMin = timeToMinutes(nowStr)
-            val startMin = timeToMinutes(startTimeStr)
-            val endMin = timeToMinutes(endTimeStr)
-
-            if (startMin <= endMin) nowMin in startMin..endMin
-            else nowMin >= startMin || nowMin <= endMin
-        } catch (e: Exception) {
-            true
-        }
+        return ScheduleWindow.isWithin(formatNow("HH:mm"), startTimeStr, endTimeStr)
     }
 
-    private fun timeToMinutes(time: String): Int {
-        val parts = time.split(":")
-        return parts[0].toInt() * 60 + parts[1].toInt()
-    }
-
-    private fun resolveSourceApp(packageName: String): String = when (packageName) {
-        "com.tencent.mobileqq" -> "QQ"
-        "com.tencent.mm" -> "微信"
-        "com.alibaba.android.rimet" -> "钉钉"
-        "com.tencent.wework" -> "企业微信"
-        else -> "其他应用"
-    }
+    private fun resolveSourceApp(packageName: String): String =
+        MessageFilter.resolveSourceApp(packageName)
 
     private fun getApiConfig(): Triple<String, String, String> {
         val url = prefs.getString("api_url", "") ?: ""

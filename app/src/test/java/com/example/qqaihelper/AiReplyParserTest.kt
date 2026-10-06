@@ -149,6 +149,72 @@ class AiReplyParserTest {
         assertEquals("取件码 5621，金额 ¥128.00", parsed.keyInfo)
     }
 
+    // ---------- 单行输入（回归测试：字段边界污染） ----------
+
+    @Test
+    fun parse_singleLineInput_fieldsDoNotBleedIntoEachOther() {
+        // AI 未按格式换行，把多个字段挤在同一行 —— 曾导致字段互相污染
+        val reply = "【类型】日程 【摘要】开会 【重要性】高"
+
+        val parsed = AiReplyParser.parse(reply)
+
+        assertEquals("日程", parsed.type)
+        assertEquals("开会", parsed.summary)
+        assertEquals("高", parsed.importance)
+    }
+
+    @Test
+    fun parse_singleLineMemo_extractsCleanFields() {
+        val reply = "【类型】备忘【摘要】取件码【关键信息】5621【重要性】中"
+
+        val parsed = AiReplyParser.parse(reply)
+
+        assertTrue(parsed.isMemo)
+        assertEquals("取件码", parsed.summary)
+        assertEquals("5621", parsed.keyInfo)
+        assertEquals("中", parsed.importance)
+    }
+
+    // ---------- 发送人 ----------
+
+    @Test
+    fun parse_sender_extracted() {
+        val reply = """
+            【发送人】张三
+            【类型】日程
+            【摘要】开会
+        """.trimIndent()
+
+        val parsed = AiReplyParser.parse(reply)
+
+        assertEquals("张三", parsed.sender)
+        assertTrue(parsed.hasSender)
+    }
+
+    @Test
+    fun parse_senderMissing_isNullAndNotValid() {
+        val parsed = AiReplyParser.parse("【类型】日程\n【摘要】开会")
+
+        assertNull(parsed.sender)
+        assertFalse(parsed.hasSender)
+    }
+
+    @Test
+    fun parse_senderPlaceholderWu_treatedAsAbsent() {
+        val parsed = AiReplyParser.parse("【发送人】无\n【摘要】开会")
+
+        assertEquals("无", parsed.sender)
+        assertFalse(parsed.hasSender)
+    }
+
+    @Test
+    fun parse_senderSingleLine_boundaryRespected() {
+        val parsed = AiReplyParser.parse("【发送人】李四 【摘要】交材料")
+
+        assertEquals("李四", parsed.sender)
+        assertEquals("交材料", parsed.summary)
+    }
+
     @Test
     fun parse_fieldOrderDoesNotMatter() {
         val reply = """

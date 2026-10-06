@@ -125,6 +125,7 @@
     <string name="memo_title">Memos</string>
     <string name="memo_settings_cd">AI &amp; Schedule Settings</string>
     <string name="memo_from">From: %1$s</string>
+    <string name="memo_sender">Sender: %1$s</string>
     <string name="memo_summary">Summary: %1$s</string>
     <string name="memo_content">Original: %1$s</string>
     <string name="memo_key_info">🔑 %1$s</string>

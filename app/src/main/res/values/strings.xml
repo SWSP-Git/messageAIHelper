@@ -125,6 +125,7 @@
     <string name="memo_title">备忘录</string>
     <string name="memo_settings_cd">AI 与日程设置</string>
     <string name="memo_from">来自：%1$s</string>
+    <string name="memo_sender">发送人：%1$s</string>
     <string name="memo_summary">摘要：%1$s</string>
     <string name="memo_content">原文：%1$s</string>
     <string name="memo_key_info">🔑 %1$s</string>

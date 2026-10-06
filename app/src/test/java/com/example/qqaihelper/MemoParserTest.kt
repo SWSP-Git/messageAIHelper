@@ -64,6 +64,15 @@ class MemoParserTest {
     }
 
     @Test
+    fun extract_senderField_parsedAndOptional() {
+        val withSender = listOf("来源: QQ", "发送人: 张三", "摘要: 开会")
+        val withoutSender = listOf("来源: QQ", "摘要: 开会")
+
+        assertEquals("张三", MemoParser.extract(withSender, MemoParser.FIELD_SENDER))
+        assertNull(MemoParser.extract(withoutSender, MemoParser.FIELD_SENDER))
+    }
+
+    @Test
     fun extract_prefixMustMatchWholeField() {
         // “来源” 不应误匹配 “来源App”
         val lines = listOf("来源App: xxx")

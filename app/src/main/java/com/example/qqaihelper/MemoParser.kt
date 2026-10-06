@@ -20,6 +20,7 @@ object MemoParser {
 
     // ---- 固定字段前缀 ----
     const val FIELD_SOURCE = "来源"
+    const val FIELD_SENDER = "发送人"
     const val FIELD_TIME = "时间"
     const val FIELD_IMPORTANCE = "重要性"
     const val FIELD_SUMMARY = "摘要"

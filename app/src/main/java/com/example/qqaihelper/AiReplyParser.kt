@@ -22,17 +22,24 @@ import java.util.regex.Pattern
 object AiReplyParser {
 
     // ---- 预编译正则（避免每次解析都重新编译） ----
-    private val TYPE_PATTERN = Pattern.compile("【类型】(.*?)(?=\\n|$)")
-    private val SUMMARY_PATTERN = Pattern.compile("【摘要】(.*?)(?=\\n|$)")
-    private val KEY_INFO_PATTERN = Pattern.compile("【关键信息】(.*?)(?=\\n|$)")
-    private val IMPORTANCE_PATTERN = Pattern.compile("【重要性】(.*?)(?=\\n|$)")
-    private val SUGGESTION_PATTERN = Pattern.compile("【智能建议】(.*?)(?=\\n|$)")
-    private val TODO_PATTERN = Pattern.compile("【待办】(.*?)(?=\\n|$)")
+    //
+    // 字段结束边界 (?=\n|【|$)：遇到「换行」「下一个【字段】标记」或「字符串结尾」即停止。
+    // 之所以额外用「【」作边界，是为了兼容 AI 未按格式换行、把多个字段挤在同一行的情况
+    // （例如 "【摘要】开会 【重要性】高"）。若只用 (?=\n|$)，单行输入下 .*? 会一路吃到
+    // 行尾，导致字段互相污染（摘要捕获到 "开会 【重要性】高"）。
+    private val SENDER_PATTERN = Pattern.compile("【发送人】(.*?)(?=\\n|【|$)")
+    private val TYPE_PATTERN = Pattern.compile("【类型】(.*?)(?=\\n|【|$)")
+    private val SUMMARY_PATTERN = Pattern.compile("【摘要】(.*?)(?=\\n|【|$)")
+    private val KEY_INFO_PATTERN = Pattern.compile("【关键信息】(.*?)(?=\\n|【|$)")
+    private val IMPORTANCE_PATTERN = Pattern.compile("【重要性】(.*?)(?=\\n|【|$)")
+    private val SUGGESTION_PATTERN = Pattern.compile("【智能建议】(.*?)(?=\\n|【|$)")
+    private val TODO_PATTERN = Pattern.compile("【待办】(.*?)(?=\\n|【|$)")
     private val TODO_TIME_PATTERN = Pattern.compile("【待办时间】(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})")
 
     /**
      * AI 回复的结构化解析结果。
      *
+     * @property sender     发送人（AI 从消息标题/内容中提取；未匹配到为 null）
      * @property type       消息类型，"日程" 或 "备忘"（缺省为 "日程"）
      * @property summary    摘要（缺省为 "无摘要"）
      * @property keyInfo    关键信息（缺省为 "无"）
@@ -42,6 +49,7 @@ object AiReplyParser {
      * @property todoTime   待办时间（yyyy-MM-dd HH:mm），未匹配到为 null
      */
     data class ParsedReply(
+        val sender: String?,
         val type: String,
         val summary: String,
         val keyInfo: String,
@@ -52,6 +60,9 @@ object AiReplyParser {
     ) {
         /** 是否为备忘类型 */
         val isMemo: Boolean get() = type == "备忘"
+
+        /** 发送人是否有效（非空且不为占位符"无"） */
+        val hasSender: Boolean get() = !sender.isNullOrBlank() && sender != "无"
     }
 
     /**
@@ -62,6 +73,7 @@ object AiReplyParser {
      */
     fun parse(aiReply: String): ParsedReply {
         return ParsedReply(
+            sender = matchFirst(SENDER_PATTERN, aiReply),
             type = matchFirst(TYPE_PATTERN, aiReply) ?: "日程",
             summary = matchFirst(SUMMARY_PATTERN, aiReply) ?: "无摘要",
             keyInfo = matchFirst(KEY_INFO_PATTERN, aiReply) ?: "无",

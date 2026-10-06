@@ -31,6 +31,7 @@ class MemoAdapter(private val memoList: List<String>) : RecyclerView.Adapter<Mem
 
     class MemoViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvSource: TextView = view.findViewById(R.id.tvSource)
+        val tvSender: TextView = view.findViewById(R.id.tvSender)
         val tvTime: TextView = view.findViewById(R.id.tvTime)
         val tvImportance: TextView = view.findViewById(R.id.tvImportance)
         val tvKeyInfo: TextView = view.findViewById(R.id.tvKeyInfo)
@@ -52,6 +53,15 @@ class MemoAdapter(private val memoList: List<String>) : RecyclerView.Adapter<Mem
             R.string.memo_from,
             extract(lines, "来源") ?: ctx.getString(R.string.memo_unknown)
         )
+        // 发送人：AI 提取到时显示，未提取到时隐藏
+        val sender = extract(lines, MemoParser.FIELD_SENDER)
+        if (!sender.isNullOrBlank()) {
+            holder.tvSender.text = ctx.getString(R.string.memo_sender, sender)
+            holder.tvSender.visibility = View.VISIBLE
+        } else {
+            holder.tvSender.visibility = View.GONE
+        }
+
         holder.tvTime.text = extract(lines, "时间") ?: ""
         holder.tvSummary.text = ctx.getString(
             R.string.memo_summary,
