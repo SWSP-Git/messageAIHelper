@@ -1,32 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:fitsSystemWindows="true"
-    android:paddingTop="60dp">
+    android:paddingTop="60dp"
+    android:background="#252A31">
 
-    <!-- 内层容器：负责左右留白。努比亚等 ROM 会忽略根布局 padding，
-         必须用内层布局的 layout_margin 才能稳定生效。 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:layout_marginLeft="24dp"
-        android:layout_marginRight="24dp">
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- 顶部栏：标题 + 齿轮 -->
+        <RelativeLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="备忘录"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:text="备忘录"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"/>
+
+            <ImageView
+                android:id="@+id/btnAiOptions"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:padding="12dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_preferences"
+                app:tint="#FFFFFF"
+                android:contentDescription="AI 与日程设置"/>
+        </RelativeLayout>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewMemos"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="16dp" />
 
     </LinearLayout>
 

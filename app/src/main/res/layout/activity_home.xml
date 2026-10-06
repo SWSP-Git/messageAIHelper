@@ -6,7 +6,7 @@
     android:orientation="vertical"
     android:fitsSystemWindows="true"
     android:paddingTop="60dp"
-    android:background="#F8F9FA">
+    android:background="#E8EAED">
 
     <!-- 内层容器：负责左右留白。
          注意：努比亚等国产 ROM 会忽略根布局的 padding，

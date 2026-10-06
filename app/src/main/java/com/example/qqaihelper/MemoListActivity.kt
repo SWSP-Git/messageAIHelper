@@ -1,6 +1,8 @@
 package com.example.qqaihelper
 
+import android.content.Intent
 import android.os.Bundle
+import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -32,6 +34,11 @@ class MemoListActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_memo_list)
+
+        // 齿轮 → AI 与日程设置页
+        findViewById<ImageView>(R.id.btnAiOptions).setOnClickListener {
+            startActivity(Intent(this, AiOptionsActivity::class.java))
+        }
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerViewMemos)
         recyclerView.layoutManager = LinearLayoutManager(this)

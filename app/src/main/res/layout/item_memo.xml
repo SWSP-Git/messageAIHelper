@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="16dp"
+    android:layout_marginHorizontal="4dp"
     android:layout_marginVertical="8dp"
     app:cardBackgroundColor="#F5F5F5"
     app:cardCornerRadius="12dp"
@@ -15,9 +15,68 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <TextView android:id="@+id/tvSource" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#1976D2" android:textSize="12sp" android:textStyle="bold" />
-        <TextView android:id="@+id/tvTime" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:textColor="#757575" android:textSize="11sp" />
-        <TextView android:id="@+id/tvSummary" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textColor="#212121" android:textSize="15sp" />
-        <TextView android:id="@+id/tvContent" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:textColor="#757575" android:textSize="13sp" />
+        <!-- 顶部：来源 + 时间 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvSource"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#1976D2"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#9E9E9E"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- 关键信息（红字加粗，无内容时隐藏） -->
+        <TextView
+            android:id="@+id/tvKeyInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:textColor="#D32F2F"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <!-- 智能建议（蓝字，无内容时隐藏） -->
+        <TextView
+            android:id="@+id/tvSuggestion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="#1976D2"
+            android:textSize="14sp"
+            android:visibility="gone" />
+
+        <!-- 摘要 -->
+        <TextView
+            android:id="@+id/tvSummary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:textColor="#212121"
+            android:textSize="15sp" />
+
+        <!-- 原文 -->
+        <TextView
+            android:id="@+id/tvContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="#757575"
+            android:textSize="13sp" />
+
     </LinearLayout>
 </androidx.cardview.widget.CardView>

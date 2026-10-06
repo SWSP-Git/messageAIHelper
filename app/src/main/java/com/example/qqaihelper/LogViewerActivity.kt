@@ -60,9 +60,8 @@ class LogViewerActivity : AppCompatActivity() {
     private fun loadLogContent() {
         val logFile = AppLogger.getLogFile()
         if (logFile.exists()) {
-            val lines = logFile.readLines()
-            val displayLines = if (lines.size > 2000) lines.takeLast(2000) else lines
-            tvLogContent.text = displayLines.joinToString("\n")
+            // takeLast 对短数组也安全：长度不足时直接返回全部
+            tvLogContent.text = logFile.readLines().takeLast(2000).joinToString("\n")
 
             // 自动滚到底部（post 是为了等 TextView 布局完成后再滚动）
             scrollView.post {

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:fitsSystemWindows="true"
-    android:paddingTop="60dp">
+    android:paddingTop="60dp"
+    android:background="#252A31">
 
-    <!-- 内层容器：负责左右留白。努比亚等 ROM 会忽略根布局 padding，
-         必须用内层布局的 layout_margin 才能稳定生效。 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -15,52 +15,74 @@
         android:layout_marginLeft="20dp"
         android:layout_marginRight="20dp">
 
-        <!-- 顶部工具栏：标题 + 分享 + 清空 -->
+        <!-- 顶部栏 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="10dp">
+            android:layout_marginBottom="16dp">
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="运行日志"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
 
             <Button
                 android:id="@+id/btnShareLog"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="10dp"
-                android:text="分享" />
+                android:minHeight="40dp"
+                android:layout_marginEnd="8dp"
+                android:text="分享"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textAllCaps="false"
+                android:background="@drawable/btn_secondary_selector"
+                android:paddingHorizontal="16dp" />
 
             <Button
                 android:id="@+id/btnClearLog"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="清空" />
+                android:minHeight="40dp"
+                android:text="清空"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textAllCaps="false"
+                android:background="@drawable/btn_secondary_selector"
+                android:paddingHorizontal="16dp" />
         </LinearLayout>
 
-        <!-- 日志内容滚动区 -->
-        <ScrollView
-            android:id="@+id/scrollViewLog"
+        <!-- 日志内容卡片 -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#F0F0F0"
-            android:padding="10dp">
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp">
 
-            <TextView
-                android:id="@+id/tvLogContent"
+            <ScrollView
+                android:id="@+id/scrollViewLog"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:textSize="12sp"
-                android:textColor="#333333" />
-        </ScrollView>
+                android:layout_height="match_parent"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/tvLogContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:textSize="12sp"
+                    android:textColor="#333333" />
+            </ScrollView>
+        </androidx.cardview.widget.CardView>
 
     </LinearLayout>
 

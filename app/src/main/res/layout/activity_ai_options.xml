@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true"
+    android:paddingTop="60dp"
+    android:background="#252A31">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="AI 与日程设置"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:layout_marginBottom="20dp"/>
+
+            <!-- ================= 卡片 1：模型运行位置 ================= -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🤖 模型运行位置"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#1976D2"
+                        android:layout_marginBottom="12dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="4dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="启用本地模型"
+                                android:textSize="15sp"
+                                android:textColor="#212121"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="开启后自动断开云端 API，使用设备本地推理（开发中）"
+                                android:textSize="12sp"
+                                android:textColor="#757575"/>
+                        </LinearLayout>
+
+                        <Switch
+                            android:id="@+id/switchLocalModel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- ================= 卡片 2：日程结合模式 ================= -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📅 日程结合模式"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#1976D2"
+                        android:layout_marginBottom="12dp"/>
+
+                    <RadioGroup
+                        android:id="@+id/radioGroupScheduleMode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <RadioButton
+                            android:id="@+id/radioModeNone"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingVertical="8dp"
+                            android:text="不结合日程"
+                            android:textSize="15sp"
+                            android:textColor="#212121"/>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="32dp"
+                            android:text="AI 只生成行动建议，不检查日程冲突"
+                            android:textSize="12sp"
+                            android:textColor="#757575"
+                            android:layout_marginBottom="8dp"/>
+
+                        <RadioButton
+                            android:id="@+id/radioModeCodeCheck"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingVertical="8dp"
+                            android:text="代码侧冲突检测"
+                            android:textSize="15sp"
+                            android:textColor="#212121"/>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="32dp"
+                            android:text="写入日程前查询前后 30 分钟是否有冲突，有则追加警告"
+                            android:textSize="12sp"
+                            android:textColor="#757575"
+                            android:layout_marginBottom="8dp"/>
+
+                        <RadioButton
+                            android:id="@+id/radioModeAiAnalysis"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingVertical="8dp"
+                            android:text="交给 AI 分析"
+                            android:textSize="15sp"
+                            android:textColor="#212121"/>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="32dp"
+                            android:text="把用户未来日程塞进 prompt，由 AI 自行判断冲突（仅云端模型可用）"
+                            android:textSize="12sp"
+                            android:textColor="#757575"/>
+                    </RadioGroup>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- ================= 卡片 3：日程查询天数 ================= -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔢 未来日程查询天数"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#1976D2"
+                        android:layout_marginBottom="12dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <EditText
+                            android:id="@+id/etLookaheadDays"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:hint="7"
+                            android:inputType="number"
+                            android:minHeight="48dp"
+                            android:background="@drawable/input_bg"
+                            android:paddingHorizontal="14dp"
+                            android:textSize="14sp"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:text="天（1-30）"
+                            android:textSize="14sp"
+                            android:textColor="#757575"/>
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="仅在「交给 AI 分析」模式下生效"
+                        android:textSize="12sp"
+                        android:textColor="#9E9E9E"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- ================= 保存按钮 ================= -->
+            <Button
+                android:id="@+id/btnSaveAiOptions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="52dp"
+                android:layout_marginTop="4dp"
+                android:text="保存设置"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textAllCaps="false"
+                android:background="@drawable/btn_primary_selector"/>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

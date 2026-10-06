@@ -4,7 +4,9 @@ import android.Manifest
 import android.app.Notification
 import android.content.ContentValues
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.database.Cursor
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.provider.CalendarContract
@@ -29,9 +31,59 @@ import java.util.Locale
 import java.util.TimeZone
 import java.util.regex.Pattern
 
+/**
+ * 核心服务：监听系统通知 → 关键词过滤 → 调用 AI 解析 → 写入日历或备忘录。
+ *
+ * 三档日程结合模式（由 AiOptionsActivity 配置）：
+ * 1. MODE_NONE         不结合日程：AI 只生成智能建议
+ * 2. MODE_CODE_CHECK   代码侧冲突检测：AI 生成建议后，代码查 ±30min 冲突追加警告
+ * 3. MODE_AI_ANALYSIS  交给 AI 分析：把用户未来 N 天日程塞进 prompt，AI 自行判断冲突（仅云端）
+ */
 class QQNotificationListener : NotificationListenerService() {
 
-    // ==================== 成员变量 ====================
+    companion object {
+        // ---- 预编译正则 ----
+        private val TYPE_PATTERN = Pattern.compile("【类型】(.*?)(?=\\n|$)")
+        private val SUMMARY_PATTERN = Pattern.compile("【摘要】(.*?)(?=\\n|$)")
+        private val KEY_INFO_PATTERN = Pattern.compile("【关键信息】(.*?)(?=\\n|$)")
+        private val SUGGESTION_PATTERN = Pattern.compile("【智能建议】(.*?)(?=\\n|$)")
+        private val TODO_PATTERN = Pattern.compile("【待办】(.*?)(?=\\n|$)")
+        private val TODO_TIME_PATTERN = Pattern.compile("【待办时间】(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})")
+
+        // ---- 系统提示词模板 ----
+        private val SYSTEM_PROMPT_TEMPLATE = """
+            你是一个QQ消息助理。当前的真实时间是：{TIME}。请提取发送人、摘要和待办事项。
+            请判断消息类型：如果包含明确时间，请标记为【类型】日程；如果是纯信息（如电话号、账号、需记住的内容），请标记为【类型】备忘。
+            如果存在待办，必须严格以当前的真实时间为基准，推算出准确的执行时间（格式严格为 YYYY-MM-DD HH:MM）。
+            对于【关键信息】字段：如果消息包含验证码、取件码、电话号、账号、金额、地址等必须原样保留的数据，请原样照抄，不要改写或省略。
+            对于【智能建议】字段：用一句话提醒用户下一步可以做什么（例如"记得今天下班前去取件"、"建议提前 10 分钟到会议室"），没有建议时填"无"。
+            请严格按以下格式回复：
+            【发送人】xxx
+            【类型】日程 或 备忘
+            【重要性】高/中/低
+            【摘要】一句话概括
+            【关键信息】xxx（无则填"无"）
+            【智能建议】xxx（无则填"无"）
+            【待办】xxx
+            【待办时间】YYYY-MM-DD HH:MM 或 无
+        """.trimIndent()
+
+        // ---- 常用常量 ----
+        private const val PREFS_NAME = "app_settings"
+        private const val TIME_FORMAT_DATETIME = "yyyy-MM-dd HH:mm:ss"
+        private const val TIME_FORMAT_MINUTE = "yyyy-MM-dd HH:mm"
+        private const val DEBOUNCE_WINDOW_MS = 10_000L
+        private const val AI_MAX_RETRIES = 3
+        private const val AI_RETRY_DELAY_MS = 5_000L
+        private const val MEMO_FILE_NAME = "memo_list.txt"
+
+        // ---- 日程冲突检测时间窗口（±30 分钟） ----
+        private const val CONFLICT_WINDOW_MS = 30 * 60 * 1000L
+    }
+
+    private val prefs: SharedPreferences by lazy {
+        getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    }
 
     private var lastMessage = ""
     private var lastMessageTime = 0L
@@ -44,8 +96,7 @@ class QQNotificationListener : NotificationListenerService() {
         .retryOnConnectionFailure(true)
         .build()
 
-    // Webhook 配置变更监听器
-    private val prefsListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+    private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (key == "webhook_enabled" || key == "webhook_port" || key == "webhook_token") {
             AppLogger.d("检测到 Webhook 配置变更，正在重启服务...")
             restartWebhookServer()
@@ -57,14 +108,12 @@ class QQNotificationListener : NotificationListenerService() {
     override fun onCreate() {
         super.onCreate()
         AppLogger.init(applicationContext)
-        val prefs = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
         prefs.registerOnSharedPreferenceChangeListener(prefsListener)
         restartWebhookServer()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        val prefs = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
         prefs.unregisterOnSharedPreferenceChangeListener(prefsListener)
         webhookServer?.stop()
         webhookServer = null
@@ -76,8 +125,6 @@ class QQNotificationListener : NotificationListenerService() {
         webhookServer?.stop()
         webhookServer = null
 
-        val prefs = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
-        // 默认 false：用户未主动开启前不暴露端口
         if (!prefs.getBoolean("webhook_enabled", false)) {
             AppLogger.d("⏸️ Webhook 服务未启用")
             return
@@ -97,22 +144,19 @@ class QQNotificationListener : NotificationListenerService() {
         }
     }
 
-    // ==================== 通知监听 ====================
+    // ==================== 通知监听入口 ====================
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
         val packageName = sbn?.packageName ?: return
 
-        val prefs = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
         if (!prefs.getBoolean("service_enabled", true)) return
-        if (!isWithinSchedule(prefs)) return
+        if (!isWithinSchedule()) return
 
-        // 白名单过滤
-        val savedString = prefs.getString("monitored_packages", "") ?: ""
-        val monitoredPackages = savedString.split(",").filter { it.isNotEmpty() }
+        val monitoredPackages = prefs.getString("monitored_packages", "")
+            ?.split(",")?.filter { it.isNotEmpty() } ?: emptyList()
         if (!monitoredPackages.contains(packageName)) return
 
-        // 提取通知内容
         val extras = sbn.notification.extras
         val title = extras.getString(Notification.EXTRA_TITLE) ?: "无标题"
         val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: "无内容"
@@ -129,21 +173,23 @@ class QQNotificationListener : NotificationListenerService() {
     private fun processIncomingMessage(sourceApp: String, title: String, text: String) {
         val fullMessage = "$title\n$text"
 
-        // 关键词过滤
         if (!shouldProcessMessage(sourceApp, fullMessage)) {
             AppLogger.d("消息未通过关键词过滤，跳过")
             return
         }
 
-        // 防抖（10 秒内内容相同的消息只处理一次）
         val currentTime = System.currentTimeMillis()
-        if (fullMessage == lastMessage && (currentTime - lastMessageTime) <= 10000) {
+        if (fullMessage == lastMessage && (currentTime - lastMessageTime) <= DEBOUNCE_WINDOW_MS) {
             AppLogger.d("重复通知，跳过 AI 请求")
             return
         }
 
         lastMessage = fullMessage
         lastMessageTime = currentTime
+
+        val count = prefs.getInt("processed_message_count", 0) + 1
+        prefs.edit().putInt("processed_message_count", count).apply()
+
         sendToAI(fullMessage, sourceApp)
     }
 
@@ -151,11 +197,10 @@ class QQNotificationListener : NotificationListenerService() {
 
     private fun sendToAI(message: String, sourceApp: String) {
         CoroutineScope(Dispatchers.IO).launch {
-            val maxRetries = 3
             var attempt = 0
             var success = false
 
-            while (attempt < maxRetries && !success) {
+            while (attempt < AI_MAX_RETRIES && !success) {
                 attempt++
                 AppLogger.d("========== 第 $attempt 次尝试发送 AI 请求 ==========")
 
@@ -165,37 +210,31 @@ class QQNotificationListener : NotificationListenerService() {
                 }
 
                 try {
-                    val currentTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-
-                    val systemPrompt = "你是一个QQ消息助理。当前的真实时间是：$currentTime。请提取发送人、摘要和待办事项。\n" +
-                            "请判断消息类型：如果包含明确时间，请标记为【类型】日程；如果是纯信息（如电话号、账号、需记住的内容），请标记为【类型】备忘。\n" +
-                            "如果存在待办，必须严格以当前的真实时间为基准，推算出准确的执行时间（格式严格为 YYYY-MM-DD HH:MM）。\n" +
-                            "请严格按以下格式回复：\n" +
-                            "【发送人】xxx\n【类型】日程 或 备忘\n【重要性】高/中/低\n【摘要】xxx\n【待办】xxx\n【待办时间】YYYY-MM-DD HH:MM 或 无"
-
-                    val messagesArray = JSONArray()
-
-                    val systemMsg = JSONObject()
-                    systemMsg.put("role", "system")
-                    systemMsg.put("content", systemPrompt)
-                    messagesArray.put(systemMsg)
-
-                    val userMsg = JSONObject()
-                    userMsg.put("role", "user")
-                    userMsg.put("content", message)
-                    messagesArray.put(userMsg)
-
                     val (url, key, model) = getApiConfig()
-
                     if (url.isBlank() || key.isBlank() || model.isBlank()) {
                         AppLogger.e("❌ 错误：API 配置不完整！请去 App 主界面填写 URL、Key 和模型名称。")
                         return@launch
                     }
 
-                    val jsonBody = JSONObject()
-                    jsonBody.put("model", model)
-                    jsonBody.put("messages", messagesArray)
-                    jsonBody.put("temperature", 0.3)
+                    val currentTime = formatNow(TIME_FORMAT_DATETIME)
+                    val systemPrompt = buildSystemPrompt(currentTime)
+
+                    val messagesArray = JSONArray().apply {
+                        put(JSONObject().apply {
+                            put("role", "system")
+                            put("content", systemPrompt)
+                        })
+                        put(JSONObject().apply {
+                            put("role", "user")
+                            put("content", message)
+                        })
+                    }
+
+                    val jsonBody = JSONObject().apply {
+                        put("model", model)
+                        put("messages", messagesArray)
+                        put("temperature", 0.3)
+                    }
 
                     val mediaType = "application/json; charset=utf-8".toMediaType()
                     val requestBody = jsonBody.toString().toRequestBody(mediaType)
@@ -212,55 +251,204 @@ class QQNotificationListener : NotificationListenerService() {
 
                     if (response.isSuccessful) {
                         success = true
-                        val jsonObject = JSONObject(responseBody)
-                        val choices = jsonObject.getJSONArray("choices")
-                        val aiReply = choices.getJSONObject(0).getJSONObject("message").getString("content")
-
-                        AppLogger.d("========== AI 处理成功 ==========")
-                        AppLogger.d("AI 回复内容:\n$aiReply")
-
-                        // 解析类型（?? 处理 nullable，消除 warning）
-                        val typePattern = Pattern.compile("【类型】(.*?)(?=\\n|$)")
-                        val typeMatcher = typePattern.matcher(aiReply)
-                        val type = if (typeMatcher.find()) (typeMatcher.group(1) ?: "").trim() else "日程"
-
-                        // 解析摘要
-                        val summaryPattern = Pattern.compile("【摘要】(.*?)(?=\\n|$)")
-                        val summaryMatcher = summaryPattern.matcher(aiReply)
-                        val summary = if (summaryMatcher.find()) (summaryMatcher.group(1) ?: "").trim() else "无摘要"
-
-                        if (type == "备忘") {
-                            saveMemo(sourceApp, message, summary)
-                        } else {
-                            parseAndWriteCalendar(aiReply, sourceApp)
-                        }
-
+                        handleAiResponse(responseBody, sourceApp, message)
                     } else {
                         AppLogger.e("AI 请求返回错误码，第 $attempt 次: ${response.code}")
-                        if (attempt < maxRetries) delay(5000)
+                        if (attempt < AI_MAX_RETRIES) delay(AI_RETRY_DELAY_MS)
                     }
                 } catch (e: Exception) {
                     AppLogger.e("第 $attempt 次网络请求发生异常: ${e.message}")
-                    if (attempt < maxRetries) delay(5000)
+                    if (attempt < AI_MAX_RETRIES) delay(AI_RETRY_DELAY_MS)
                 }
             }
 
             if (!success) {
-                AppLogger.e("❌ 达到最大重试次数 ($maxRetries)，放弃处理该消息。")
+                AppLogger.e("❌ 达到最大重试次数 ($AI_MAX_RETRIES)，放弃处理该消息。")
             }
+        }
+    }
+
+    /**
+     * 按当前配置的三档模式构建系统提示词。
+     *
+     * - MODE_NONE / MODE_CODE_CHECK：基础模板
+     * - MODE_AI_ANALYSIS：基础模板 + 用户未来 N 天的日程列表
+     */
+    private fun buildSystemPrompt(currentTime: String): String {
+        val basePrompt = SYSTEM_PROMPT_TEMPLATE.replace("{TIME}", currentTime)
+
+        val mode = prefs.getString(AiOptionsActivity.KEY_SCHEDULE_MODE, AiOptionsActivity.MODE_NONE)
+        if (mode != AiOptionsActivity.MODE_AI_ANALYSIS) {
+            return basePrompt
+        }
+
+        // MODE_AI_ANALYSIS：查询用户未来 N 天日程并追加到 prompt
+        val days = prefs.getInt(AiOptionsActivity.KEY_LOOKAHEAD_DAYS, AiOptionsActivity.DEFAULT_DAYS)
+        val events = queryUpcomingEvents(days)
+
+        if (events.isEmpty()) {
+            AppLogger.d("AI 分析模式：未来 $days 天无日程，跳过注入")
+            return basePrompt
+        }
+
+        AppLogger.d("AI 分析模式：注入 $events.size 条未来日程")
+
+        val scheduleText = events.joinToString("\n") { "  - $it" }
+        return """
+            $basePrompt
+
+            ---
+            以下是用户未来 $days 天的既有日程，请在生成【智能建议】时结合它们判断是否存在时间冲突。若发现冲突，请在建议中明确提示（例如"⚠️ 与已有日程「XXX」时间接近，建议调整"）：
+            $scheduleText
+        """.trimIndent()
+    }
+
+    /**
+     * 处理 AI 返回结果：解析字段 → 分发到日历或备忘录。
+     */
+    private fun handleAiResponse(responseBody: String, sourceApp: String, originalMessage: String) {
+        val aiReply = JSONObject(responseBody)
+            .getJSONArray("choices")
+            .getJSONObject(0)
+            .getJSONObject("message")
+            .getString("content")
+
+        AppLogger.d("========== AI 处理成功 ==========")
+        AppLogger.d("AI 回复内容:\n$aiReply")
+
+        val type = matchFirst(TYPE_PATTERN, aiReply) ?: "日程"
+        val summary = matchFirst(SUMMARY_PATTERN, aiReply) ?: "无摘要"
+        val keyInfo = matchFirst(KEY_INFO_PATTERN, aiReply) ?: "无"
+        var suggestion = matchFirst(SUGGESTION_PATTERN, aiReply) ?: "无"
+
+        if (type == "备忘") {
+            saveMemo(sourceApp, originalMessage, summary, keyInfo, suggestion)
+        } else {
+            // 日程类型：先尝试解析时间；若开启代码侧冲突检测，追加警告
+            val todoTime = matchFirst(TODO_TIME_PATTERN, aiReply)
+            if (todoTime != null && todoTime != "无") {
+                val mode = prefs.getString(AiOptionsActivity.KEY_SCHEDULE_MODE, AiOptionsActivity.MODE_NONE)
+                if (mode == AiOptionsActivity.MODE_CODE_CHECK) {
+                    val conflict = detectConflict(todoTime)
+                    if (conflict != null) {
+                        suggestion = if (suggestion == "无") {
+                            "⚠️ 与已有日程「$conflict」时间接近，建议确认"
+                        } else {
+                            "$suggestion ⚠️ 与「$conflict」时间接近"
+                        }
+                        AppLogger.d("代码侧冲突检测：发现冲突「$conflict」")
+                    }
+                }
+            }
+            parseAndWriteCalendar(aiReply, sourceApp, suggestion)
+        }
+    }
+
+    // ==================== 冲突检测 ====================
+
+    /**
+     * 在系统日历中查询待办时间 ±30 分钟内是否有既有事件。
+     *
+     * @param timeText 待办时间，格式 "yyyy-MM-dd HH:mm"
+     * @return 冲突事件标题；无冲突时返回 null
+     */
+    private fun detectConflict(timeText: String): String? {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALENDAR)
+            != PackageManager.PERMISSION_GRANTED) {
+            return null
+        }
+
+        val startDate = try {
+            SimpleDateFormat(TIME_FORMAT_MINUTE, Locale.getDefault()).parse(timeText)
+        } catch (e: Exception) {
+            null
+        } ?: return null
+
+        val windowStart = startDate.time - CONFLICT_WINDOW_MS
+        val windowEnd = startDate.time + CONFLICT_WINDOW_MS
+
+        return try {
+            val projection = arrayOf(CalendarContract.Events.TITLE)
+            val selection = "(${CalendarContract.Events.DTEND} > ? AND ${CalendarContract.Events.DTSTART} < ?)"
+            val args = arrayOf(windowStart.toString(), windowEnd.toString())
+            val cursor: Cursor? = contentResolver.query(
+                CalendarContract.Events.CONTENT_URI, projection, selection, args, null
+            )
+            val conflictTitle = cursor?.use {
+                if (it.moveToFirst()) it.getString(0) else null
+            }
+            conflictTitle
+        } catch (e: Exception) {
+            AppLogger.e("冲突检测查询失败: ${e.message}")
+            null
+        }
+    }
+
+    /**
+     * 查询用户未来 N 天的日程（标题 + 开始时间），用于 MODE_AI_ANALYSIS 模式注入 prompt。
+     *
+     * @param days 未来天数
+     * @return 形如 "2026-10-07 14:30  客户评审" 的字符串列表
+     */
+    private fun queryUpcomingEvents(days: Int): List<String> {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALENDAR)
+            != PackageManager.PERMISSION_GRANTED) {
+            return emptyList()
+        }
+
+        val now = System.currentTimeMillis()
+        val end = now + days * 24L * 60 * 60 * 1000
+
+        return try {
+            val projection = arrayOf(
+                CalendarContract.Events.TITLE,
+                CalendarContract.Events.DTSTART
+            )
+            val selection = "(${CalendarContract.Events.DTSTART} >= ? AND ${CalendarContract.Events.DTSTART} <= ?)"
+            val args = arrayOf(now.toString(), end.toString())
+            val cursor = contentResolver.query(
+                CalendarContract.Events.CONTENT_URI, projection, selection, args,
+                "${CalendarContract.Events.DTSTART} ASC"
+            )
+
+            val result = mutableListOf<String>()
+            cursor?.use {
+                val titleIdx = it.getColumnIndex(CalendarContract.Events.TITLE)
+                val startIdx = it.getColumnIndex(CalendarContract.Events.DTSTART)
+                val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+                while (it.moveToNext()) {
+                    val title = it.getString(titleIdx) ?: "无标题"
+                    val start = it.getLong(startIdx)
+                    result.add("${sdf.format(Date(start))}  $title")
+                }
+            }
+            result.take(50) // 上限 50 条，避免 prompt 过长
+        } catch (e: Exception) {
+            AppLogger.e("查询未来日程失败: ${e.message}")
+            emptyList()
         }
     }
 
     // ==================== 结果处理 ====================
 
-    // 保存备忘：追加写入文本文件
-    private fun saveMemo(source: String, content: String, summary: String) {
+    /** 保存备忘录：追加写入文本文件 */
+    private fun saveMemo(source: String, content: String, summary: String, keyInfo: String, suggestion: String) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-                val memoText = "来源: $source\n时间: $time\n摘要: $summary\n内容: $content\n\n"
-                val memoFile = File(filesDir, "memo_list.txt")
-                memoFile.appendText(memoText)
+                val time = formatNow(TIME_FORMAT_DATETIME)
+                val sb = StringBuilder()
+                sb.append("来源: $source\n")
+                sb.append("时间: $time\n")
+                sb.append("摘要: $summary\n")
+                if (keyInfo.isNotBlank() && keyInfo != "无") {
+                    sb.append("关键信息: $keyInfo\n")
+                }
+                if (suggestion.isNotBlank() && suggestion != "无") {
+                    sb.append("智能建议: $suggestion\n")
+                }
+                sb.append("内容: $content\n\n")
+
+                File(filesDir, MEMO_FILE_NAME).appendText(sb.toString())
                 AppLogger.d("✅ 备忘录已保存: $summary")
             } catch (e: Exception) {
                 AppLogger.e("保存备忘录失败: ${e.message}")
@@ -268,22 +456,16 @@ class QQNotificationListener : NotificationListenerService() {
         }
     }
 
-    // 解析 AI 结果并写入系统日历
-    private fun parseAndWriteCalendar(aiReply: String, sourceApp: String) {
+    /** 解析 AI 结果并写入系统日历 */
+    private fun parseAndWriteCalendar(aiReply: String, sourceApp: String, suggestion: String) {
         try {
-            val todoPattern = Pattern.compile("【待办】(.*?)(?=\\n|$)")
-            val timePattern = Pattern.compile("【待办时间】(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})")
-            val todoMatcher = todoPattern.matcher(aiReply)
-            val timeMatcher = timePattern.matcher(aiReply)
+            val todoText = matchFirst(TODO_PATTERN, aiReply)
+            val timeText = matchFirst(TODO_TIME_PATTERN, aiReply)
 
-            if (!todoMatcher.find() || !timeMatcher.find()) {
+            if (todoText == null || timeText == null) {
                 AppLogger.d("未提取到待办或时间格式不匹配")
                 return
             }
-
-            val todoText = (todoMatcher.group(1) ?: "").trim()
-            val timeText = (timeMatcher.group(1) ?: "").trim()
-
             if (todoText == "无" || timeText == "无") {
                 AppLogger.d("无待办，跳过写入日历")
                 return
@@ -291,13 +473,14 @@ class QQNotificationListener : NotificationListenerService() {
 
             AppLogger.d("解析到待办: $todoText, 时间: $timeText，准备写入日历")
 
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_CALENDAR)
+                != PackageManager.PERMISSION_GRANTED) {
                 AppLogger.e("没有日历写入权限")
                 return
             }
 
-            val fmt = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-            val startDate = fmt.parse(timeText) ?: run {
+            val startDate = SimpleDateFormat(TIME_FORMAT_MINUTE, Locale.getDefault()).parse(timeText)
+            if (startDate == null) {
                 AppLogger.e("时间解析失败: $timeText")
                 return
             }
@@ -305,9 +488,15 @@ class QQNotificationListener : NotificationListenerService() {
             val startMillis = startDate.time
             val endMillis = startMillis + 60 * 60 * 1000
 
+            // 冲突警告 + 智能建议一起写进日历事件的描述
+            val descBuilder = StringBuilder("来自${sourceApp}消息自动提取")
+            if (suggestion.isNotBlank() && suggestion != "无") {
+                descBuilder.append("\n\n【AI建议】$suggestion")
+            }
+
             val values = ContentValues().apply {
                 put(CalendarContract.Events.TITLE, todoText)
-                put(CalendarContract.Events.DESCRIPTION, "来自${sourceApp}消息自动提取")
+                put(CalendarContract.Events.DESCRIPTION, descBuilder.toString())
                 put(CalendarContract.Events.DTSTART, startMillis)
                 put(CalendarContract.Events.DTEND, endMillis)
                 put(CalendarContract.Events.CALENDAR_ID, 1)
@@ -328,13 +517,11 @@ class QQNotificationListener : NotificationListenerService() {
 
     // ==================== 辅助函数 ====================
 
-    // 关键词过滤（支持 AND / OR）
+    /** 关键词过滤（支持 AND / OR） */
     private fun shouldProcessMessage(sourceApp: String, messageText: String): Boolean {
-        val prefs = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
         val rulesString = prefs.getString("filter_rules", "") ?: ""
         if (rulesString.isEmpty()) return true
 
-        // 将 sourceApp 映射回包名（filter_rules 里保存的是包名）
         val packageName = when (sourceApp) {
             "QQ" -> "com.tencent.mobileqq"
             "微信" -> "com.tencent.mm"
@@ -343,23 +530,19 @@ class QQNotificationListener : NotificationListenerService() {
             else -> return true
         }
 
-        val lines = rulesString.split("\n")
-        for (line in lines) {
+        for (line in rulesString.split("\n")) {
             val parts = line.split("|")
-            if (parts.size >= 3 && parts[0] == packageName) {
-                val keywords = parts[1].split(",")
-                val logic = parts[2].trim().uppercase()
-                var matchCount = 0
-                for (kw in keywords) {
-                    if (messageText.contains(kw.trim())) matchCount++
-                }
-                return if (logic == "AND") matchCount == keywords.size else matchCount > 0
-            }
+            if (parts.size < 3 || parts[0] != packageName) continue
+
+            val keywords = parts[1].split(",")
+            val logic = parts[2].trim().uppercase()
+            val matchCount = keywords.count { messageText.contains(it.trim()) }
+
+            return if (logic == "AND") matchCount == keywords.size else matchCount > 0
         }
         return true
     }
 
-    // 检查是否有可用网络
     private fun isNetworkAvailable(): Boolean {
         val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val network = cm.activeNetwork ?: return false
@@ -367,31 +550,30 @@ class QQNotificationListener : NotificationListenerService() {
         return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
-    // 检查当前是否在定时开关允许的时间段内
-    private fun isWithinSchedule(prefs: android.content.SharedPreferences): Boolean {
+    private fun isWithinSchedule(): Boolean {
         if (!prefs.getBoolean("schedule_enabled", false)) return true
 
         val startTimeStr = prefs.getString("schedule_start", "08:00") ?: "08:00"
         val endTimeStr = prefs.getString("schedule_end", "22:00") ?: "22:00"
 
         return try {
-            val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
-            val nowStr = sdf.format(Date())
-            fun timeToMinutes(t: String): Int {
-                val parts = t.split(":")
-                return parts[0].toInt() * 60 + parts[1].toInt()
-            }
+            val nowStr = formatNow("HH:mm")
             val nowMin = timeToMinutes(nowStr)
             val startMin = timeToMinutes(startTimeStr)
             val endMin = timeToMinutes(endTimeStr)
+
             if (startMin <= endMin) nowMin in startMin..endMin
             else nowMin >= startMin || nowMin <= endMin
         } catch (e: Exception) {
-            true // 解析失败时默认放行，不阻塞用户
+            true
         }
     }
 
-    // 包名 → 应用中文名
+    private fun timeToMinutes(time: String): Int {
+        val parts = time.split(":")
+        return parts[0].toInt() * 60 + parts[1].toInt()
+    }
+
     private fun resolveSourceApp(packageName: String): String = when (packageName) {
         "com.tencent.mobileqq" -> "QQ"
         "com.tencent.mm" -> "微信"
@@ -400,12 +582,18 @@ class QQNotificationListener : NotificationListenerService() {
         else -> "其他应用"
     }
 
-    // 动态获取用户配置的 API 信息
     private fun getApiConfig(): Triple<String, String, String> {
-        val prefs = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
         val url = prefs.getString("api_url", "") ?: ""
         val key = prefs.getString("api_key", "") ?: ""
         val model = prefs.getString("model_name", "") ?: ""
         return Triple(url, key, model)
     }
+
+    private fun matchFirst(pattern: Pattern, text: String): String? {
+        val matcher = pattern.matcher(text)
+        return if (matcher.find()) (matcher.group(1) ?: "").trim() else null
+    }
+
+    private fun formatNow(pattern: String): String =
+        SimpleDateFormat(pattern, Locale.getDefault()).format(Date())
 }
