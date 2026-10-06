@@ -6,7 +6,7 @@
 [![Version](https://img.shields.io/badge/Version-1.2.0-brightgreen.svg)](https://github.com/SWSP-Git/messageAIHelper/releases)
 [![Android CI](https://github.com/SWSP-Git/messageAIHelper/actions/workflows/android-ci.yml/badge.svg)](https://github.com/SWSP-Git/messageAIHelper/actions/workflows/android-ci.yml)
 
-> 🔔 捕获通知 · 🤖 AI 智能解析 · 📅 静默写日历 · 📝 智能归档备忘录 · 🌐 中英双语
+> 🔔 捕获通知 · 🤖 AI 智能解析 · 📅 静默写日历 · 📝 智能归档备忘录 · 🧠 本地小模型 · 🌐 中英双语
 
 ---
 
@@ -16,25 +16,27 @@
 
 它可以实时捕获微信、QQ、钉钉等应用的通知消息，通过兼容 OpenAI 格式的 AI 接口（如硅基流动、DeepSeek 等）智能解析消息内容：
 
-- ✅ 含明确时间的消息 → **自动静默写入手机系统日历**
+- ✅ 含明确时间的消息 → **自动静默写入手机系统日历**，并同时归档到备忘录
 - ✅ 纯信息类消息（验证码、取件码、账号等）→ **自动归档到备忘录**，关键信息红字醒目展示
 - ✅ AI 为每条消息生成**行动建议**，可选结合用户现有日程做**冲突检测**
 - ✅ 备忘录支持**重要性分级**（高/中/低），默认只显示中高重要性的条目
+- ✅ **支持离线本地小模型**（可选）：无需联网、不消耗 API 额度，完全在手机本地推理
 
 **数据持久化**：备忘录默认写入外部存储（`/sdcard/Download/messageAIHelper/`），App 卸载重装不丢数据；同时支持 **ZIP 备份导出/导入**。
 
 **国际化**：内置中英双语，切换即时生效。
 
-所有数据在手机本地处理，只有 AI 解析环节会将消息文本发送到你自己配置的 API。开发者不收集任何用户数据。
+所有数据在手机本地处理，只有 AI 解析环节会将消息文本发送到你自己配置的 API（使用本地模型时**完全离线**）。开发者不收集任何用户数据。
 
 **messageAIHelper** is a **localized automation assistant** based on Android notification listening and AI LLM APIs.
 
 It captures notifications from WeChat, QQ, DingTalk, and parses them via OpenAI-compatible APIs:
 
-- ✅ Messages with clear time → **silently written to system calendar**
+- ✅ Messages with clear time → **silently written to system calendar**, also archived to Memo
 - ✅ Pure information (codes, accounts, amounts) → **archived to Memo** with key info highlighted
 - ✅ AI generates **action suggestions**, optionally checking **schedule conflicts**
 - ✅ Memos support **importance levels** (High/Medium/Low), default shows only medium+ entries
+- ✅ **Offline local model** (optional): no network, no API quota, fully on-device inference
 
 **Data Persistence**: Memos stored in external storage (`/sdcard/Download/messageAIHelper/`), survives uninstall; also supports **ZIP backup export/import**.
 
@@ -61,11 +63,23 @@ All data is processed locally. Only AI parsing sends message text to your config
 
 ### 📝 备忘录模块
 
-- AI 自动识别「纯信息」类消息并归档
-- 卡片式列表，关键信息红字加粗、AI 建议蓝字提示
+- AI 自动识别「纯信息」类消息并归档；**日程类消息也会同时归档**（便于回溯）
+- **卡片折叠 / 展开**：默认精简显示（重要性 / 发送人 / 时间 / 关键信息 / 建议 / 摘要），单击展开详情
+- **多选管理**：长按卡片进入多选，支持全选 / 分享 / 删除 / 取消
+- 关键信息红字加粗、AI 建议蓝字提示
 - **重要性标签**：高红 / 中橙 / 低灰三色胶囊
 - **智能过滤**：默认隐藏低重要性，一键切换显示全部
 - 数据存储于外部存储，卸载重装不丢失
+
+### 🧠 本地小模型（离线推理）
+
+- **完全离线**：基于 [MNN](https://github.com/alibaba/MNN) 引擎在手机本地运行小模型（如 Qwen2.5-1.5B 4bit），无需联网、不消耗 API 额度
+- **插件化分发**：模型以 `.zip` 插件导入（含 `plugin.json` 清单 + 权重），APK 本体保持轻量
+- **自动搜寻**：一键扫描 Download / Documents 目录，识别插件包并列出，点击即安装
+- **模型来源二选一**：在「AI 与日程设置」中切换「云端 / 本地」，本地服务运行于 `127.0.0.1`
+- 支持安装多个插件、自由切换（同一时刻加载一个）
+
+> ⚠️ 本地推理仅支持 **arm64-v8a** 架构；模型插件需从 [Releases](https://github.com/SWSP-Git/messageAIHelper/releases) 单独下载。
 
 ### 🌐 中英双语
 
@@ -155,7 +169,20 @@ All data is processed locally. Only AI parsing sends message text to your config
 - **导出数据**：选择保存位置，生成 ZIP
 - **导入数据**：选择 ZIP 文件，恢复数据
 
-### 6. Webhook 使用示例
+### 6. 启用本地模型（可选，离线）
+
+1. 从 [Releases](https://github.com/SWSP-Git/messageAIHelper/releases) 下载模型插件 `qwen2.5-1.5b-mnn.zip`
+2. 把 zip 放到手机 **Download** 目录
+3. 进入「备忘录 → 右上角齿轮 → AI 与日程设置」
+4. 选「本地模型（离线）」→ 点「🔍 自动搜寻」→ 点击列表中的插件安装
+   （也可点「📥 导入插件 (.zip)」手动选择）
+5. 安装后点「🔄 加载 / 重载」载入内存（首次约需数十秒）
+6. 点「保存设置」
+
+> ⚠️ 需先授予「所有文件访问权限」（更多设置 → 存储位置），否则自动搜寻扫不到文件。
+> ⚠️ 仅支持 arm64-v8a 架构；1.5B 模型约占 1–2GB 内存。
+
+### 7. Webhook 使用示例
 
 ```bash
 curl "http://<手机IP>:8080/?token=<您的Token>&msg=明天下午3点开会"
@@ -171,7 +198,8 @@ curl "http://<手机IP>:8080/?token=<您的Token>&msg=明天下午3点开会"
 |------|------|
 | 语言 | Kotlin |
 | 网络 | OkHttp 4.x (HTTP/1.1), Coroutines |
-| 本地服务 | NanoHTTPD (Webhook) |
+| 本地服务 | NanoHTTPD（Webhook + 本地模型 OpenAI 兼容接口） |
+| 本地推理 | MNN 引擎（JNI / C++），插件化模型分发 |
 | 存储 | SharedPreferences + 外部文件存储 |
 | 系统 API | NotificationListenerService, CalendarContract, WindowManager, Foreground Service, Storage Access Framework |
 | 国际化 | AppCompatDelegate.setApplicationLocales |
@@ -191,16 +219,33 @@ app/src/main/java/com/example/qqaihelper/
 ├── MemoListActivity.kt          # 备忘录列表（重要性过滤）
 ├── LogViewerActivity.kt         # 日志查看器
 ├── QQNotificationListener.kt    # 核心服务：监听 → AI → 写入
+├── AiReplyParser.kt             # 纯逻辑：AI 回复解析（可单测）
+├── MemoParser.kt                # 纯逻辑：备忘录解析与过滤（可单测）
+├── MessageFilter.kt             # 纯逻辑：关键词过滤与包名映射（可单测）
+├── ScheduleWindow.kt            # 纯逻辑：定时窗口判断（可单测）
 ├── WebhookServer.kt             # 局域网 HTTP 服务
 ├── KeepAliveService.kt          # 前台保活服务
 ├── PixelWindowManager.kt        # 1 像素悬浮窗
 ├── BootReceiver.kt              # 开机自启
-├── MemoAdapter.kt               # 备忘录适配器（重要性标签渲染）
+├── MemoAdapter.kt               # 备忘录适配器（折叠/展开、多选）
 ├── LocaleHelper.kt              # 语言管理工具
 ├── StorageHelper.kt             # 存储路径管理（外部优先，私有降级）
 ├── DataExporter.kt              # 数据导出（ZIP）
 ├── DataImporter.kt              # 数据导入（ZIP）
 └── AppLogger.kt                 # 全局日志工具
+```
+
+本地模型插件模块（可整体删除以移除本地模型功能）：
+
+```
+localllm/src/main/
+├── java/com/example/qqaihelper/localllm/
+│   ├── LocalLlmManager.kt       # 总控 API（插件查询 / 加载 / 服务生命周期）
+│   ├── PluginManager.kt         # 插件管理（安装 / 列表 / 删除 / 自动搜寻）
+│   ├── LocalLlmServer.kt        # 127.0.0.1:8090 OpenAI 兼容服务
+│   └── LocalLlmEngine.kt        # JNI 桥（load / chat / release）
+├── cpp/llm_jni.cpp              # MNN LLM 的 JNI 封装
+└── jniLibs/arm64-v8a/           # libMNN.so / liblocalllm.so / libc++_shared.so
 ```
 
 ---
@@ -210,7 +255,7 @@ app/src/main/java/com/example/qqaihelper/
 - ✅ 用户配置（API Key、过滤规则、Token）仅保存在手机本地 SharedPreferences
 - ✅ 备忘录存储在设备外部存储（Download 目录），用户可直接查看
 - ✅ 日志存储在 App 私有目录
-- ✅ AI 解析仅将消息文本发送到**你自己配置的 API 服务商**
+- ✅ AI 解析仅将消息文本发送到**你自己配置的 API 服务商**（使用本地模型时**完全离线**）
 - ✅ 导出的 ZIP 备份包含敏感信息，请妥善保管
 - ⚠️ Webhook 默认关闭，仅局域网可访问，请设置强 Token
 - ⚠️ 请勿使用不可信的 API 服务商
@@ -290,11 +335,23 @@ All data processed locally. Only AI parsing sends message text to your configure
 
 ### 📝 Memo Module
 
-- AI auto-archives "pure information" messages
-- Card-based list with key info in red, AI suggestions in blue
+- AI auto-archives "pure information" messages; **schedule messages are also archived**
+- **Collapsible cards**: compact view by default (importance/sender/time/key info/suggestion/summary), tap to expand details
+- **Multi-select**: long-press to select, with select-all / share / delete / cancel
+- Key info in red, AI suggestions in blue
 - **Importance tags**: red/orange/gray pills for High/Medium/Low
 - **Smart filter**: hides low-importance by default, one-tap to show all
 - Data survives app uninstall (external storage)
+
+### 🧠 Local Model (Offline Inference)
+
+- **Fully offline**: runs a small model (e.g., Qwen2.5-1.5B 4bit) on-device via the [MNN](https://github.com/alibaba/MNN) engine; no network, no API quota
+- **Plugin-based**: models imported as `.zip` plugins (with `plugin.json` + weights); keeps the APK lightweight
+- **Auto Scan**: one-tap scan of Download / Documents to find and install plugin packages
+- **Cloud/Local switch**: toggle in "AI & Schedule"; local service runs at `127.0.0.1`
+- Multiple plugins supported; one loaded at a time
+
+> ⚠️ Local inference supports **arm64-v8a** only; download the model plugin separately from [Releases](https://github.com/SWSP-Git/messageAIHelper/releases).
 
 ### 🌐 Bilingual (Chinese / English)
 
@@ -373,7 +430,20 @@ All data processed locally. Only AI parsing sends message text to your configure
 - **Export**: choose location, generates ZIP
 - **Import**: pick ZIP to restore
 
-### 6. Webhook Example
+### 6. Enable Local Model (Optional, Offline)
+
+1. Download the model plugin `qwen2.5-1.5b-mnn.zip` from [Releases](https://github.com/SWSP-Git/messageAIHelper/releases)
+2. Put the zip into the phone's **Download** folder
+3. Go to "Memo → gear icon → AI & Schedule"
+4. Select "Local Model (Offline)" → tap "🔍 Auto Scan" → tap the plugin to install
+   (or tap "📥 Import Plugin (.zip)" to pick it manually)
+5. Tap "🔄 Load / Reload" to load into memory (first load takes tens of seconds)
+6. Tap "Save"
+
+> ⚠️ Grant "All files access" first (More Settings → Storage Location), otherwise Auto Scan finds nothing.
+> ⚠️ arm64-v8a only; a 1.5B model uses ~1–2GB RAM.
+
+### 7. Webhook Example
 
 ```bash
 curl "http://<phone-IP>:8080/?token=<your-token>&msg=Meeting tomorrow 3pm"
@@ -387,7 +457,8 @@ Success: `✅ 消息已成功交给 App 处理`
 |----------|------|
 | Language | Kotlin |
 | Network | OkHttp 4.x (HTTP/1.1), Coroutines |
-| Local Server | NanoHTTPD |
+| Local Server | NanoHTTPD (Webhook + local model OpenAI-compatible API) |
+| Local Inference | MNN engine (JNI / C++), plugin-based model distribution |
 | Storage | SharedPreferences + External file storage |
 | System APIs | NotificationListenerService, CalendarContract, WindowManager, Foreground Service, SAF |
 | i18n | AppCompatDelegate.setApplicationLocales |
@@ -405,11 +476,15 @@ app/src/main/java/com/example/qqaihelper/
 ├── MemoListActivity.kt          # Memo list (importance filter)
 ├── LogViewerActivity.kt         # Log viewer
 ├── QQNotificationListener.kt    # Core service: listen → AI → write
+├── AiReplyParser.kt             # Pure logic: AI reply parser (unit-testable)
+├── MemoParser.kt                # Pure logic: memo parser & filter (unit-testable)
+├── MessageFilter.kt             # Pure logic: keyword filter & package mapping
+├── ScheduleWindow.kt            # Pure logic: schedule time window
 ├── WebhookServer.kt             # LAN HTTP server
 ├── KeepAliveService.kt          # Foreground keep-alive service
 ├── PixelWindowManager.kt        # 1-pixel overlay
 ├── BootReceiver.kt              # Boot auto-start
-├── MemoAdapter.kt               # Memo adapter (importance rendering)
+├── MemoAdapter.kt               # Memo adapter (collapse/expand, multi-select)
 ├── LocaleHelper.kt              # Language management
 ├── StorageHelper.kt             # Storage path manager (external-first)
 ├── DataExporter.kt              # Data export (ZIP)
@@ -417,12 +492,25 @@ app/src/main/java/com/example/qqaihelper/
 └── AppLogger.kt                 # Global logger
 ```
 
+Local model plugin module (removable to drop the local-model feature):
+
+```
+localllm/src/main/
+├── java/com/example/qqaihelper/localllm/
+│   ├── LocalLlmManager.kt       # Control API (plugin query / load / server lifecycle)
+│   ├── PluginManager.kt         # Plugin mgmt (install / list / delete / auto-scan)
+│   ├── LocalLlmServer.kt        # OpenAI-compatible server at 127.0.0.1:8090
+│   └── LocalLlmEngine.kt        # JNI bridge (load / chat / release)
+├── cpp/llm_jni.cpp              # MNN LLM JNI wrapper
+└── jniLibs/arm64-v8a/           # libMNN.so / liblocalllm.so / libc++_shared.so
+```
+
 ## 🔒 Privacy & Security
 
 - ✅ User configs (API Key, filters, tokens) stored locally in SharedPreferences
 - ✅ Memos stored in device external storage (Download folder)
 - ✅ Logs stored in app's private directory
-- ✅ AI parsing only sends text to **your configured API provider**
+- ✅ AI parsing only sends text to **your configured API provider** (with local model, **fully offline**)
 - ✅ Exported ZIP contains sensitive info; keep it safe
 - ⚠️ Webhook disabled by default, LAN-only; use strong Token
 - ⚠️ Do not use untrusted API providers
