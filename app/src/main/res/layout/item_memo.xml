@@ -15,11 +15,21 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- ===== 首行：多选复选框 + 重要性 + 来源 + 发送人 + 时间 ===== -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical">
+
+            <CheckBox
+                android:id="@+id/cbSelect"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:visibility="gone"
+                android:clickable="false"
+                android:focusable="false"/>
 
             <TextView
                 android:id="@+id/tvImportance"
@@ -58,25 +68,7 @@
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvKeyInfo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:textColor="#D32F2F"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/tvSuggestion"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textColor="#1976D2"
-            android:textSize="14sp"
-            android:visibility="gone" />
-
+        <!-- ===== 摘要（折叠态也显示） ===== -->
         <TextView
             android:id="@+id/tvSummary"
             android:layout_width="match_parent"
@@ -85,13 +77,60 @@
             android:textColor="#212121"
             android:textSize="15sp" />
 
+        <!-- ===== 折叠/展开提示 ===== -->
         <TextView
-            android:id="@+id/tvContent"
+            android:id="@+id/tvExpandHint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/memo_expand_hint"
+            android:textColor="#9E9E9E"
+            android:textSize="11sp" />
+
+        <!-- ===== 详情区（默认折叠） ===== -->
+        <LinearLayout
+            android:id="@+id/llDetail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:textColor="#757575"
-            android:textSize="13sp" />
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="#7B1FA2"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvKeyInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textColor="#D32F2F"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvSuggestion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="#1976D2"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="#757575"
+                android:textSize="13sp" />
+        </LinearLayout>
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

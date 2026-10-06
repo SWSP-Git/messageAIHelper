@@ -65,6 +65,85 @@
             android:textAllCaps="false"
             android:background="@drawable/btn_secondary_selector" />
 
+        <!-- 多选操作栏（默认隐藏） -->
+        <LinearLayout
+            android:id="@+id/llSelectionBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvSelectionCount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btnSelectAll"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:minHeight="46dp"
+                    android:layout_marginEnd="4dp"
+                    android:text="@string/memo_select_all"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp"
+                    android:textAllCaps="false"
+                    android:background="@drawable/btn_secondary_selector" />
+
+                <Button
+                    android:id="@+id/btnShareSelected"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:minHeight="46dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:text="@string/memo_share_selected"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp"
+                    android:textAllCaps="false"
+                    android:background="@drawable/btn_secondary_selector" />
+
+                <Button
+                    android:id="@+id/btnDeleteSelected"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:minHeight="46dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:text="@string/memo_delete_selected"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp"
+                    android:textAllCaps="false"
+                    android:background="@drawable/btn_primary_selector" />
+
+                <Button
+                    android:id="@+id/btnCancelSelect"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:minHeight="46dp"
+                    android:layout_marginStart="4dp"
+                    android:text="@string/memo_cancel_select"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp"
+                    android:textAllCaps="false"
+                    android:background="@drawable/btn_secondary_selector" />
+            </LinearLayout>
+        </LinearLayout>
+
     </LinearLayout>
 
 </LinearLayout>

@@ -46,7 +46,13 @@ class QQNotificationListener : NotificationListenerService() {
         private val SYSTEM_PROMPT_TEMPLATE = """
             你是一个消息助理。当前的真实时间是：{TIME}。请分析消息并严格按格式提取字段。
 
-            【类型】判断：消息含明确时间 → 填"日程"；纯信息（验证码/取件码/账号/电话等）→ 填"备忘"。
+            【类型】判断（务必仔细）：
+            - 只要消息中出现"任何时间线索"（如"明天/今天/后天/下周X + 具体时刻"、"X点"、"X点半"、"上午/中午/下午/晚上 X 点"、"X月X日"等），一律填"日程"，即使同时含有地点、物品等描述。
+            - 例："明天中午11点整去火车站" → 日程（含时间，去火车站是待办）。
+            - 例："下周三下午3点开会" → 日程。
+            - 例："取件码 5621" → 备忘（无时间）。
+            - 例："我的账号是 abc123" → 备忘（无时间）。
+            - 只有当消息**完全不含任何时间信息**、且属于纯信息（验证码/取件码/账号/电话/地址/金额等）时，才填"备忘"。
             【待办时间】推算：若存在待办，必须以当前真实时间为基准，推算出准确执行时间（格式严格为 YYYY-MM-DD HH:MM）。
             【关键信息】原样照抄：验证码、取件码、电话号、账号、金额、地址等数据必须原样保留，不要改写或省略。
 
@@ -385,7 +391,8 @@ class QQNotificationListener : NotificationListenerService() {
         val parsed = AiReplyParser.parse(aiReply)
 
         if (parsed.isMemo) {
-            saveMemo(sourceApp, parsed.sender, originalMessage, parsed.summary, parsed.keyInfo, parsed.suggestion, parsed.importance)
+            // 备忘类型：只写备忘录
+            saveMemo(sourceApp, parsed.sender, originalMessage, parsed.summary, parsed.keyInfo, parsed.suggestion, parsed.importance, "备忘")
         } else {
             // 日程类型：先尝试解析时间；若开启代码侧冲突检测，追加警告
             var suggestion = parsed.suggestion
@@ -404,7 +411,9 @@ class QQNotificationListener : NotificationListenerService() {
                     }
                 }
             }
+            // 日程类型：写日历 + 同时归档到备忘录（便于回溯）
             parseAndWriteCalendar(aiReply, sourceApp, suggestion)
+            saveMemo(sourceApp, parsed.sender, originalMessage, parsed.summary, parsed.keyInfo, suggestion, parsed.importance, "日程")
         }
     }
 
@@ -505,6 +514,7 @@ class QQNotificationListener : NotificationListenerService() {
      * @param keyInfo    关键信息
      * @param suggestion 智能建议
      * @param importance 重要性
+     * @param category   分类："日程" 或 "备忘"（日程类消息会同时归档到备忘录）
      */
     private fun saveMemo(
         source: String,
@@ -513,7 +523,8 @@ class QQNotificationListener : NotificationListenerService() {
         summary: String,
         keyInfo: String,
         suggestion: String,
-        importance: String
+        importance: String,
+        category: String = "备忘"
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -524,6 +535,7 @@ class QQNotificationListener : NotificationListenerService() {
                 if (!sender.isNullOrBlank() && sender != "无") {
                     sb.append("发送人: $sender\n")
                 }
+                sb.append("分类: $category\n")
                 sb.append("时间: $time\n")
                 sb.append("重要性: $importance\n")
                 sb.append("摘要: $summary\n")

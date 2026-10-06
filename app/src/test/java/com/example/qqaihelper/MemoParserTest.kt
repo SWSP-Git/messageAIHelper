@@ -73,6 +73,16 @@ class MemoParserTest {
     }
 
     @Test
+    fun extract_categoryField_parsedAndOptional() {
+        // 日程类消息会写入「分类: 日程」，备忘类写入「分类: 备忘」
+        val schedule = listOf("来源: QQ", "分类: 日程", "摘要: 开会")
+        val legacy = listOf("来源: QQ", "摘要: 老数据")
+
+        assertEquals("日程", MemoParser.extract(schedule, MemoParser.FIELD_CATEGORY))
+        assertNull(MemoParser.extract(legacy, MemoParser.FIELD_CATEGORY))
+    }
+
+    @Test
     fun extract_prefixMustMatchWholeField() {
         // “来源” 不应误匹配 “来源App”
         val lines = listOf("来源App: xxx")
