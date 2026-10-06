@@ -26,8 +26,8 @@ import androidx.recyclerview.widget.RecyclerView
  * - 单击卡片：在多选模式下切换选中；否则切换展开/折叠详情
  * - 长按卡片：进入多选模式（由 MemoListActivity 处理）
  *
- * 折叠态仅显示：重要性 / 来源 / 发送人 / 时间 / 摘要
- * 展开态额外显示：分类 / 关键信息 / 智能建议 / 原文
+ * 折叠态仅显示：重要性 / 发送人 / 时间 / 关键信息 / 智能建议 / 摘要
+ * 展开态额外显示：来源 / 分类 / 原文
  *
  * ⚠️ 数据文件中的字段前缀（"来源:" 等）为固定中文，不随 UI 语言变化。
  */
@@ -79,7 +79,7 @@ class MemoAdapter(
         val raw = memoList[position]
         val lines = raw.split("\n")
 
-        // ===== 折叠态始终显示：重要性 / 发送人 / 时间 / 关键信息 / 智能建议 =====
+        // ===== 折叠态始终显示：重要性 / 发送人 / 时间 / 关键信息 / 智能建议 / 摘要 =====
         bindImportance(holder.tvImportance, ctx, MemoParser.importance(lines))
 
         val sender = MemoParser.extract(lines, MemoParser.FIELD_SENDER)
@@ -108,7 +108,13 @@ class MemoAdapter(
             holder.tvSuggestion.visibility = View.GONE
         }
 
-        // ===== 详情区（展开时显示）：来源 / 分类 / 摘要 / 原文 =====
+        // 摘要（折叠态始终显示）
+        holder.tvSummary.text = ctx.getString(
+            R.string.memo_summary,
+            MemoParser.extract(lines, MemoParser.FIELD_SUMMARY) ?: ctx.getString(R.string.memo_none)
+        )
+
+        // ===== 详情区（展开时显示）：来源 / 分类 / 原文 =====
         val isExpanded = expanded.contains(raw)
         holder.llDetail.visibility = if (isExpanded) View.VISIBLE else View.GONE
         holder.tvExpandHint.text = ctx.getString(
@@ -129,11 +135,6 @@ class MemoAdapter(
             } else {
                 holder.tvCategory.visibility = View.GONE
             }
-
-            holder.tvSummary.text = ctx.getString(
-                R.string.memo_summary,
-                MemoParser.extract(lines, MemoParser.FIELD_SUMMARY) ?: ctx.getString(R.string.memo_none)
-            )
 
             holder.tvContent.text = ctx.getString(
                 R.string.memo_content,
