@@ -1,0 +1,6 @@
+# 模型权重体积巨大（~880MB），不入库；由 mnn-models 源码目录在构建时复制进来。
+/src/main/assets/models/
+
+# 原生构建中间产物
+/build/
+/build_native_*/

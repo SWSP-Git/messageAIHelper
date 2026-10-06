@@ -104,8 +104,41 @@
     <!-- AI & Schedule Settings -->
     <string name="ai_title">AI &amp; Schedule</string>
     <string name="ai_card_model">🤖 Model Location</string>
-    <string name="ai_local_model">Enable Local Model</string>
-    <string name="ai_local_model_desc">Disconnects cloud API and uses on-device inference (WIP)</string>
+    <string name="ai_model_cloud">Cloud Model</string>
+    <string name="ai_model_cloud_desc">Uses the OpenAI-compatible API from Config Center (needs network, consumes quota)</string>
+    <string name="ai_model_local">Local Model (Offline)</string>
+    <string name="ai_model_local_desc">Runs a small model on-device; no network, no quota</string>
+    <string name="ai_plugin_section">📦 Installed Model Plugins</string>
+    <string name="ai_plugin_none">(No plugins yet. Tap the button below to import a .zip)</string>
+    <string name="ai_plugin_import">📥 Import Plugin (.zip)</string>
+    <string name="ai_scan_button">🔍 Auto Scan</string>
+    <string name="ai_scan_scanning">Scanning phone for plugin packages…</string>
+    <string name="ai_scan_none">No usable plugin found. Put the plugin .zip in Download or Documents and retry</string>
+    <string name="ai_scan_found">Found %1$d usable plugin(s). Tap to install:</string>
+    <string name="ai_scan_installing">Installing: %1$s</string>
+    <string name="ai_scan_installed_tag"> (installed)</string>
+    <string name="ai_plugin_load">🔄 Load / Reload</string>
+    <string name="ai_port_label">Local Service Port</string>
+    <string name="ai_port_invalid">Local service port must be between 1024 and 65535</string>
+    <string name="ai_plugin_delete_title">Delete Plugin</string>
+    <string name="ai_plugin_delete_msg">Delete "%1$s"? This removes the local model files (%2$s).</string>
+    <string name="ai_plugin_delete">Delete</string>
+    <string name="ai_plugin_cancel">Cancel</string>
+    <string name="ai_plugin_use">Set Current</string>
+    <string name="ai_plugin_used">Selected</string>
+    <string name="ai_plugin_imported">✅ Plugin imported: %1$s</string>
+    <string name="ai_plugin_import_failed">❌ Plugin import failed (invalid zip structure)</string>
+    <string name="ai_plugin_need_select">⚠️ Please import and select a model plugin first</string>
+    <string name="ai_plugin_loaded_ok">✅ Local model loaded; ready for offline inference</string>
+    <string name="ai_plugin_loaded_fail">❌ Model load failed (insufficient memory or non-arm64 device)</string>
+    <string name="ai_plugin_importing">Importing plugin, please wait…</string>
+    <string name="ai_plugin_extracting">Extracting: %1$s</string>
+    <string name="ai_status_loaded">✅ Loaded plugin: %1$s (offline inference ready)</string>
+    <string name="ai_status_selected">📦 Selected plugin: %1$s (tap "Load / Reload" to load into memory)</string>
+    <string name="ai_status_installed">⚠️ Plugin installed but not selected. Tap one in the list below</string>
+    <string name="ai_status_none">⬇️ No local model plugin installed. Tap "Import Plugin (.zip)"</string>
+    <string name="ai_status_checking">Checking status…</string>
+    <string name="ai_save_local_warn">⚠️ Local model enabled but no plugin selected. Please import and select one first</string>
     <string name="ai_card_mode">📅 Schedule Integration Mode</string>
     <string name="ai_mode_none">No Integration</string>
     <string name="ai_mode_none_desc">AI only generates suggestions; no conflict check</string>
@@ -120,6 +153,12 @@
     <string name="ai_save">Save</string>
     <string name="ai_days_invalid">Lookahead days must be between %1$d and %2$d</string>
     <string name="ai_saved_toast">✅ Settings saved</string>
+
+    <!-- Local model plugin first-run prompt -->
+    <string name="local_prompt_title">💡 Local Model Plugin Available</string>
+    <string name="local_prompt_msg">This app supports offline on-device inference: import a local model plugin (.zip) in &quot;AI &amp; Schedule&quot; to run a small model directly on your phone — no network, no API quota.\n\nGo to settings now?</string>
+    <string name="local_prompt_go">Go to Settings</string>
+    <string name="local_prompt_later">Later</string>
 
     <!-- Memo -->
     <string name="memo_title">Memos</string>

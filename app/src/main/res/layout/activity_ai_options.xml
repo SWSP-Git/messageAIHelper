@@ -30,6 +30,7 @@
                 android:textColor="#FFFFFF"
                 android:layout_marginBottom="20dp"/>
 
+            <!-- ================= 卡片 1：模型运行位置 ================= -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -53,39 +54,185 @@
                         android:textColor="#1976D2"
                         android:layout_marginBottom="12dp"/>
 
-                    <LinearLayout
+                    <RadioGroup
+                        android:id="@+id/radioGroupModelSource"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:paddingVertical="4dp">
+                        android:orientation="vertical">
+
+                        <RadioButton
+                            android:id="@+id/radioModelCloud"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingVertical="8dp"
+                            android:text="@string/ai_model_cloud"
+                            android:textSize="15sp"
+                            android:textColor="#212121"/>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="32dp"
+                            android:text="@string/ai_model_cloud_desc"
+                            android:textSize="12sp"
+                            android:textColor="#757575"
+                            android:layout_marginBottom="8dp"/>
+
+                        <RadioButton
+                            android:id="@+id/radioModelLocal"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingVertical="8dp"
+                            android:text="@string/ai_model_local"
+                            android:textSize="15sp"
+                            android:textColor="#212121"/>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="32dp"
+                            android:text="@string/ai_model_local_desc"
+                            android:textSize="12sp"
+                            android:textColor="#757575"/>
+                    </RadioGroup>
+
+                    <!-- 本地模型插件面板：仅在选择本地模型时展开 -->
+                    <LinearLayout
+                        android:id="@+id/localModelPanel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginTop="16dp"
+                        android:padding="14dp"
+                        android:background="@drawable/input_bg"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:id="@+id/tvLocalModelStatus"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/ai_status_checking"
+                            android:textSize="13sp"
+                            android:textColor="#424242"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="14dp"
+                            android:text="@string/ai_plugin_section"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            android:textColor="#1976D2"/>
 
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:id="@+id/llPluginList"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
+                            android:orientation="vertical"
+                            android:layout_marginTop="6dp"/>
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/ai_local_model"
-                                android:textSize="15sp"
-                                android:textColor="#212121"/>
+                        <TextView
+                            android:id="@+id/tvNoPlugin"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="@string/ai_plugin_none"
+                            android:textSize="12sp"
+                            android:textColor="#9E9E9E"/>
 
-                            <TextView
-                                android:layout_width="wrap_content"
+                        <Button
+                            android:id="@+id/btnAutoScan"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="46dp"
+                            android:layout_marginTop="12dp"
+                            android:text="@string/ai_scan_button"
+                            android:textColor="#FFFFFF"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            android:textAllCaps="false"
+                            android:background="@drawable/btn_secondary_selector"/>
+
+                        <!-- 自动搜寻结果列表（动态填充） -->
+                        <LinearLayout
+                            android:id="@+id/llScanResult"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_marginTop="6dp"/>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginTop="12dp">
+
+                            <Button
+                                android:id="@+id/btnImportPlugin"
+                                android:layout_width="0dp"
+                                android:layout_weight="1"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:text="@string/ai_local_model_desc"
-                                android:textSize="12sp"
-                                android:textColor="#757575"/>
+                                android:minHeight="46dp"
+                                android:layout_marginEnd="6dp"
+                                android:text="@string/ai_plugin_import"
+                                android:textColor="#FFFFFF"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                android:textAllCaps="false"
+                                android:background="@drawable/btn_primary_selector"/>
+
+                            <Button
+                                android:id="@+id/btnInstallLocalModel"
+                                android:layout_width="0dp"
+                                android:layout_weight="1"
+                                android:layout_height="wrap_content"
+                                android:minHeight="46dp"
+                                android:layout_marginStart="6dp"
+                                android:text="@string/ai_plugin_load"
+                                android:textColor="#FFFFFF"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                android:textAllCaps="false"
+                                android:background="@drawable/btn_secondary_selector"/>
                         </LinearLayout>
 
-                        <Switch
-                            android:id="@+id/switchLocalModel"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"/>
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/ai_port_label"
+                                android:textSize="13sp"
+                                android:textColor="#757575"/>
+
+                            <EditText
+                                android:id="@+id/etLocalModelPort"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginStart="10dp"
+                                android:hint="8090"
+                                android:inputType="number"
+                                android:minHeight="44dp"
+                                android:background="@drawable/input_bg"
+                                android:paddingHorizontal="12dp"
+                                android:textSize="14sp"/>
+                        </LinearLayout>
+
+                        <ProgressBar
+                            android:id="@+id/pbLocalModel"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:max="100"
+                            android:progress="0"
+                            android:visibility="gone"/>
                     </LinearLayout>
 
                 </LinearLayout>

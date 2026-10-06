@@ -13,6 +13,7 @@ import android.provider.CalendarContract
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import androidx.core.content.ContextCompat
+import com.example.qqaihelper.localllm.LocalLlmManager
 import fi.iki.elonen.NanoHTTPD
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -82,9 +83,10 @@ class QQNotificationListener : NotificationListenerService() {
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
-        .readTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
+        // 本地模型在手机上推理较慢（首次还要加载权重），读取超时放宽到 5 分钟
+        .readTimeout(300, java.util.concurrent.TimeUnit.SECONDS)
         .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
-        .callTimeout(110, java.util.concurrent.TimeUnit.SECONDS)
+        .callTimeout(310, java.util.concurrent.TimeUnit.SECONDS)
         .protocols(listOf(okhttp3.Protocol.HTTP_1_1))
         .retryOnConnectionFailure(true)
         .build()
@@ -93,6 +95,10 @@ class QQNotificationListener : NotificationListenerService() {
         if (key == "webhook_enabled" || key == "webhook_port" || key == "webhook_token") {
             AppLogger.d("检测到 Webhook 配置变更，正在重启服务...")
             restartWebhookServer()
+        }
+        if (key == AiOptionsActivity.KEY_LOCAL_MODEL_ENABLED || key == AiOptionsActivity.KEY_LOCAL_MODEL_PORT) {
+            AppLogger.d("检测到本地模型配置变更，正在同步本地服务...")
+            applyLocalModelServer()
         }
     }
 
@@ -103,6 +109,7 @@ class QQNotificationListener : NotificationListenerService() {
         AppLogger.init(applicationContext)
         prefs.registerOnSharedPreferenceChangeListener(prefsListener)
         restartWebhookServer()
+        applyLocalModelServer()
     }
 
     override fun onDestroy() {
@@ -110,6 +117,29 @@ class QQNotificationListener : NotificationListenerService() {
         prefs.unregisterOnSharedPreferenceChangeListener(prefsListener)
         webhookServer?.stop()
         webhookServer = null
+        LocalLlmManager.stopServer()
+    }
+
+    // ==================== 本地模型服务管理 ====================
+
+    /** 本地模型服务端口（用户在「AI 与日程设置」里配置，默认 8090） */
+    private fun localModelPort(): Int =
+        prefs.getString(AiOptionsActivity.KEY_LOCAL_MODEL_PORT, null)?.toIntOrNull()
+            ?: LocalLlmManager.DEFAULT_PORT
+
+    /** 根据设置开/关本地模型插件服务（切换为云端时关掉，节省内存） */
+    private fun applyLocalModelServer() {
+        val enabled = prefs.getBoolean(AiOptionsActivity.KEY_LOCAL_MODEL_ENABLED, false)
+        if (enabled) {
+            val port = localModelPort()
+            val ok = LocalLlmManager.startServer(applicationContext, port)
+            AppLogger.d(
+                if (ok) "✅ 本地模型服务已启动：${LocalLlmManager.localEndpoint(port)}"
+                else "❌ 本地模型服务启动失败（端口 $port 可能被占用）"
+            )
+        } else {
+            LocalLlmManager.stopServer()
+        }
     }
 
     // ==================== Webhook 管理 ====================
@@ -197,16 +227,39 @@ class QQNotificationListener : NotificationListenerService() {
                 attempt++
                 AppLogger.d("========== 第 $attempt 次尝试发送 AI 请求 ==========")
 
-                if (!isNetworkAvailable()) {
+                val useLocal = prefs.getBoolean(AiOptionsActivity.KEY_LOCAL_MODEL_ENABLED, false)
+
+                if (!useLocal && !isNetworkAvailable()) {
                     AppLogger.e("当前没有网络，跳过本次请求")
                     return@launch
                 }
 
                 try {
-                    val (url, key, model) = getApiConfig()
-                    if (url.isBlank() || key.isBlank() || model.isBlank()) {
-                        AppLogger.e("❌ 错误：API 配置不完整！请去 App 主界面填写 URL、Key 和模型名称。")
-                        return@launch
+                    val url: String
+                    val key: String
+                    val model: String
+                    if (useLocal) {
+                        // 本地模型：走 localllm 插件在 127.0.0.1 上暴露的 OpenAI 兼容接口
+                        val plugin = LocalLlmManager.currentPlugin(this@QQNotificationListener)
+                        if (plugin == null) {
+                            AppLogger.e("❌ 已启用本地模型，但未选中模型插件。请到「AI 与日程设置」导入并选中。")
+                            return@launch
+                        }
+                        val port = localModelPort()
+                        LocalLlmManager.startServer(applicationContext, port)
+                        url = LocalLlmManager.localEndpoint(port)
+                        key = "sk-local"
+                        model = plugin.id
+                        AppLogger.d("本次使用本地模型推理（插件：" + plugin.name + "）：" + url)
+                    } else {
+                        val (u, k, m) = getApiConfig()
+                        url = u
+                        key = k
+                        model = m
+                        if (url.isBlank() || key.isBlank() || model.isBlank()) {
+                            AppLogger.e("❌ 错误：API 配置不完整！请去 App 主界面填写 URL、Key 和模型名称。")
+                            return@launch
+                        }
                     }
 
                     val currentTime = formatNow(TIME_FORMAT_DATETIME)

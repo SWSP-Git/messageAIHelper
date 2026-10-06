@@ -24,3 +24,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "messageAIHelper"
 include(":app")
+// 本地模型插件（MNN 推理引擎 + 模型资源），可独立于主工程开关
+include(":localllm")

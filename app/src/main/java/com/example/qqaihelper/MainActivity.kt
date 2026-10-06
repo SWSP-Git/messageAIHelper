@@ -8,11 +8,23 @@ import android.os.Bundle
 import android.text.InputType
 import android.widget.*
 import androidx.activity.OnBackPressedCallback
+import com.example.qqaihelper.localllm.LocalLlmManager
 
 /**
  * 配置中心（原主页，现在作为「设置」页使用，从 HomeActivity 的齿轮进入）。
  */
 class MainActivity : BaseActivity() {
+
+    companion object {
+        /** 本地模型首次提示是否已展示 */
+        private const val KEY_LOCAL_PROMPT_SHOWN = "local_model_prompt_shown"
+    }
+
+    /** 本次进入页面是否已尝试过本地模型提示（防止 onResume 重复触发） */
+    private var localPromptChecked = false
+
+    /** 通知使用权弹窗是否正在显示（防止 onCreate / onResume 重复弹出） */
+    private var notificationPromptShowing = false
 
     private lateinit var etApiUrl: EditText
     private lateinit var etApiKey: EditText
@@ -145,7 +157,22 @@ class MainActivity : BaseActivity() {
         }
     }
 
+    /** 日历权限结果返回后，继续检查通知使用权 */
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 100) {
+            checkNotificationPermission()
+        }
+    }
+
     private fun checkNotificationPermission() {
+        // 弹窗正在显示时不重复弹出（onCreate 与 onResume 可能连续触发）
+        if (notificationPromptShowing) return
+
         val pkgName = packageName
         val flat = android.provider.Settings.Secure.getString(
             contentResolver, "enabled_notification_listeners"
@@ -153,17 +180,56 @@ class MainActivity : BaseActivity() {
         val isEnabled = flat != null && flat.contains(pkgName)
 
         if (!isEnabled) {
-            AlertDialog.Builder(this)
+            notificationPromptShowing = true
+            val dialog = AlertDialog.Builder(this)
                 .setTitle(R.string.perm_notification_title)
                 .setMessage(R.string.perm_notification_msg)
                 .setPositiveButton(R.string.perm_notification_goto) { _, _ ->
+                    // 跳转系统设置，返回后由 onResume 继续；此处不立即弹本地模型提示
                     startActivity(
                         Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
                     )
                 }
-                .setNegativeButton(R.string.dialog_later, null)
-                .show()
+                .setNegativeButton(R.string.dialog_later) { _, _ ->
+                    // 权限弹窗（用户选择「稍后」）关闭后，再提示本地模型
+                    maybeShowLocalModelPrompt()
+                }
+                .create()
+            dialog.setOnDismissListener { notificationPromptShowing = false }
+            dialog.show()
+        } else {
+            // 无通知权限弹窗时，直接进入本地模型提示
+            maybeShowLocalModelPrompt()
         }
+    }
+
+    /**
+     * 首次进入配置中心时，在所有权限弹窗处理完之后，提示用户可安装本地模型插件。
+     *
+     * 次序保证：
+     * - 日历权限（系统弹窗）→ onRequestPermissionsResult → checkNotificationPermission()
+     * - 通知使用权（AlertDialog）关闭后 → 本方法
+     * - 仅在「未展示过」且「尚无任何插件」时弹出一次
+     */
+    private fun maybeShowLocalModelPrompt() {
+        if (localPromptChecked) return
+        localPromptChecked = true
+
+        // 只提示一次
+        if (prefs.getBoolean(KEY_LOCAL_PROMPT_SHOWN, false)) return
+        prefs.edit().putBoolean(KEY_LOCAL_PROMPT_SHOWN, true).apply()
+
+        // 已装过插件就不再打扰
+        if (LocalLlmManager.hasAnyPlugin(this)) return
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.local_prompt_title)
+            .setMessage(R.string.local_prompt_msg)
+            .setPositiveButton(R.string.local_prompt_go) { _, _ ->
+                startActivity(Intent(this, AiOptionsActivity::class.java))
+            }
+            .setNegativeButton(R.string.local_prompt_later, null)
+            .show()
     }
 
     override fun onResume() {
