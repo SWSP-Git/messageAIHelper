@@ -13,7 +13,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [未发布 / Unreleased]
 
 ### 计划中 / Planned
-- 🤖 本地小模型集成（AIEngine 抽象接口 + MediaPipe / ONNX Runtime Mobile），见 [Roadmap](https://github.com/SWSP-Git/messageAIHelper/wiki/Roadmap) 阶段三。
+- 🤖 更多本地模型插件（不同尺寸 / 量化级别）
+- 📥 应用内直接下载模型插件（免手动导入）
+
+---
+
+## [v1.2.0] - 2026-10-07
+
+> 本地小模型插件化 · 离线推理 · 自动搜寻
+
+### 新增 / Added
+- **🤖 本地小模型（离线推理）**：新增 `localllm` 独立模块，基于 MNN 引擎在手机本地运行小模型（如 Qwen2.5-1.5B 4bit），无需联网、不消耗 API 额度。
+- **🔌 插件化模型分发**：模型以 `.zip` 插件形式导入（含 `plugin.json` 清单 + 模型权重），APK 本体保持轻量；支持安装多个插件、自由切换当前插件。
+- **🔍 自动搜寻**：一键扫描手机 Download / Documents 目录，自动识别含 `plugin.json` 的插件包并列出，点击即安装。
+- **🤖 模型来源二选一**：在「AI 与日程设置」中可在「云端模型」与「本地模型（离线）」之间切换；选择本地时自动启用 `127.0.0.1` 上的 OpenAI 兼容服务。
+- **💡 首次提示**：首次进入配置中心时（在所有权限弹窗之后）提示用户可安装本地模型插件。
+- **📊 插件管理增强**：显示已装插件总数与合计占用空间；切换插件时自动加载，无需再点「加载 / 重载」。
+
+### 优化 / Changed
+- 本地推理请求超时放宽：`readTimeout` 90s → **300s**、新增 `callTimeout` **310s**（首次加载权重较慢）。
+- 「AI 与日程设置」页重构：模型运行位置卡片改为二选一 + 插件管理面板。
+
+### 技术 / Technical
+- 新增 `localllm` Gradle library 模块（可整体删除以移除本地模型功能）。
+- `abiFilters` 限定 `arm64-v8a`（本地推理仅提供该架构预编译库）。
+- `androidResources.noCompress` 排除 `mnn` / `weight` / `json` / `txt` / `bin`，避免模型权重被压缩打包。
+- 版本号：`versionCode 6 → 7`、`versionName 1.1.3 → 1.2.0`。
 
 ---
 
@@ -131,7 +156,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
-[未发布 / Unreleased]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.1.3...HEAD
+[未发布 / Unreleased]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.2.0...HEAD
+[v1.2.0]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.1.3...v1.2.0
 [v1.1.3]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.1.2...v1.1.3
 [v1.1.2]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.1.1...v1.1.2
 [v1.1.1]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.1.0...v1.1.1
