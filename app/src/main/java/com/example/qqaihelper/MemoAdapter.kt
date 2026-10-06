@@ -79,10 +79,8 @@ class MemoAdapter(
         val raw = memoList[position]
         val lines = raw.split("\n")
 
-        holder.tvSource.text = ctx.getString(
-            R.string.memo_from,
-            MemoParser.extract(lines, MemoParser.FIELD_SOURCE) ?: ctx.getString(R.string.memo_unknown)
-        )
+        // ===== 折叠态始终显示：重要性 / 发送人 / 时间 / 关键信息 / 智能建议 =====
+        bindImportance(holder.tvImportance, ctx, MemoParser.importance(lines))
 
         val sender = MemoParser.extract(lines, MemoParser.FIELD_SENDER)
         if (!sender.isNullOrBlank()) {
@@ -93,15 +91,24 @@ class MemoAdapter(
         }
 
         holder.tvTime.text = MemoParser.extract(lines, MemoParser.FIELD_TIME) ?: ""
-        holder.tvSummary.text = ctx.getString(
-            R.string.memo_summary,
-            MemoParser.extract(lines, MemoParser.FIELD_SUMMARY) ?: ctx.getString(R.string.memo_none)
-        )
 
-        val importance = MemoParser.importance(lines)
-        bindImportance(holder.tvImportance, ctx, importance)
+        val keyInfo = MemoParser.extract(lines, MemoParser.FIELD_KEY_INFO)
+        if (!keyInfo.isNullOrBlank() && keyInfo != "无") {
+            holder.tvKeyInfo.text = ctx.getString(R.string.memo_key_info, keyInfo)
+            holder.tvKeyInfo.visibility = View.VISIBLE
+        } else {
+            holder.tvKeyInfo.visibility = View.GONE
+        }
 
-        // ---- 详情区（展开时显示） ----
+        val suggestion = MemoParser.extract(lines, MemoParser.FIELD_SUGGESTION)
+        if (!suggestion.isNullOrBlank() && suggestion != "无") {
+            holder.tvSuggestion.text = ctx.getString(R.string.memo_suggestion, suggestion)
+            holder.tvSuggestion.visibility = View.VISIBLE
+        } else {
+            holder.tvSuggestion.visibility = View.GONE
+        }
+
+        // ===== 详情区（展开时显示）：来源 / 分类 / 摘要 / 原文 =====
         val isExpanded = expanded.contains(raw)
         holder.llDetail.visibility = if (isExpanded) View.VISIBLE else View.GONE
         holder.tvExpandHint.text = ctx.getString(
@@ -109,7 +116,12 @@ class MemoAdapter(
         )
 
         if (isExpanded) {
-            // 分类标签（老数据无此字段则不显示）
+            holder.tvSource.text = ctx.getString(
+                R.string.memo_from,
+                MemoParser.extract(lines, MemoParser.FIELD_SOURCE) ?: ctx.getString(R.string.memo_unknown)
+            )
+            holder.tvSource.visibility = View.VISIBLE
+
             val category = MemoParser.extract(lines, MemoParser.FIELD_CATEGORY)
             if (!category.isNullOrBlank()) {
                 holder.tvCategory.text = ctx.getString(R.string.memo_category, category)
@@ -118,21 +130,10 @@ class MemoAdapter(
                 holder.tvCategory.visibility = View.GONE
             }
 
-            val keyInfo = MemoParser.extract(lines, MemoParser.FIELD_KEY_INFO)
-            if (!keyInfo.isNullOrBlank() && keyInfo != "无") {
-                holder.tvKeyInfo.text = ctx.getString(R.string.memo_key_info, keyInfo)
-                holder.tvKeyInfo.visibility = View.VISIBLE
-            } else {
-                holder.tvKeyInfo.visibility = View.GONE
-            }
-
-            val suggestion = MemoParser.extract(lines, MemoParser.FIELD_SUGGESTION)
-            if (!suggestion.isNullOrBlank() && suggestion != "无") {
-                holder.tvSuggestion.text = ctx.getString(R.string.memo_suggestion, suggestion)
-                holder.tvSuggestion.visibility = View.VISIBLE
-            } else {
-                holder.tvSuggestion.visibility = View.GONE
-            }
+            holder.tvSummary.text = ctx.getString(
+                R.string.memo_summary,
+                MemoParser.extract(lines, MemoParser.FIELD_SUMMARY) ?: ctx.getString(R.string.memo_none)
+            )
 
             holder.tvContent.text = ctx.getString(
                 R.string.memo_content,

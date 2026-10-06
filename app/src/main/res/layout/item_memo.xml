@@ -15,7 +15,7 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- ===== 首行：多选复选框 + 重要性 + 来源 + 发送人 + 时间 ===== -->
+        <!-- ===== 首行：多选复选框 + 重要性 + 发送人 + 时间 ===== -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -42,40 +42,45 @@
                 android:text="中" />
 
             <TextView
-                android:id="@+id/tvSource"
+                android:id="@+id/tvSender"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
                 android:textColor="#1976D2"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvSender"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:textColor="#616161"
-                android:textSize="12sp"
+                android:textSize="13sp"
+                android:textStyle="bold"
                 android:visibility="gone" />
 
             <TextView
                 android:id="@+id/tvTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
                 android:textColor="#9E9E9E"
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- ===== 摘要（折叠态也显示） ===== -->
+        <!-- ===== 关键信息（折叠态可见，红字突出） ===== -->
         <TextView
-            android:id="@+id/tvSummary"
+            android:id="@+id/tvKeyInfo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:textColor="#212121"
-            android:textSize="15sp" />
+            android:layout_marginTop="10dp"
+            android:textColor="#D32F2F"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <!-- ===== 智能建议（折叠态可见，蓝字） ===== -->
+        <TextView
+            android:id="@+id/tvSuggestion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="#1976D2"
+            android:textSize="14sp"
+            android:visibility="gone" />
 
         <!-- ===== 折叠/展开提示 ===== -->
         <TextView
@@ -96,32 +101,30 @@
             android:visibility="gone">
 
             <TextView
-                android:id="@+id/tvCategory"
+                android:id="@+id/tvSource"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
+                android:textColor="#616161"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
                 android:textColor="#7B1FA2"
                 android:textSize="12sp"
                 android:visibility="gone" />
 
             <TextView
-                android:id="@+id/tvKeyInfo"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:textColor="#D32F2F"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:visibility="gone" />
-
-            <TextView
-                android:id="@+id/tvSuggestion"
+                android:id="@+id/tvSummary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:textColor="#1976D2"
-                android:textSize="14sp"
-                android:visibility="gone" />
+                android:textColor="#212121"
+                android:textSize="15sp" />
 
             <TextView
                 android:id="@+id/tvContent"
