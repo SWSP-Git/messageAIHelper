@@ -116,6 +116,8 @@
     <string name="ai_scan_none">未找到可用插件包。请将插件 .zip 放到 Download 或 Documents 目录后重试</string>
     <string name="ai_scan_found">找到 %1$d 个可用插件包，点击即可安装：</string>
     <string name="ai_scan_installing">正在安装：%1$s</string>
+    <string name="ai_scan_cancel">取消搜寻</string>
+    <string name="ai_scan_cancelled">已取消搜寻</string>
     <string name="ai_scan_installed_tag">（已安装）</string>
     <string name="ai_plugin_total">共 %1$d 个插件，合计占用 %2$s</string>
     <string name="ai_plugin_switching">正在切换并加载模型…</string>

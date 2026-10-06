@@ -79,6 +79,21 @@ class QQNotificationListener : NotificationListenerService() {
             【待办时间】YYYY-MM-DD HH:MM 或 无
         """.trimIndent()
 
+        // ---- 本地小模型精简提示词 ----
+        // 小模型（1.5B）指令遵循较弱，用更短、更直接的提示词效果更好；
+        // 且本地不支持「AI 分析」模式，无需注入日程列表。
+        private val SYSTEM_PROMPT_TEMPLATE_LOCAL = """
+            你是消息解析助手。当前时间：{TIME}。只输出下面 8 行，不要任何多余文字：
+            【发送人】消息发送人，没有就填 无
+            【类型】含时间就填 日程，否则填 备忘
+            【重要性】高 或 中 或 低
+            【摘要】一句话概括，不超过 20 字
+            【关键信息】验证码/取件码/账号/金额等原样照抄，没有就填 无
+            【智能建议】一句可操作的建议，禁止填 无（如"建议尽快取件"）
+            【待办】要执行的事，没有就填 无
+            【待办时间】YYYY-MM-DD HH:MM，无则填 无
+        """.trimIndent()
+
         // ---- 常用常量 ----
         private const val PREFS_NAME = "app_settings"
         private const val TIME_FORMAT_DATETIME = "yyyy-MM-dd HH:mm:ss"
@@ -347,6 +362,12 @@ class QQNotificationListener : NotificationListenerService() {
      * - MODE_AI_ANALYSIS：基础模板 + 用户未来 N 天的日程列表
      */
     private fun buildSystemPrompt(currentTime: String): String {
+        // 本地模型用精简提示词（小模型指令遵循较弱，短提示更稳）
+        val useLocal = prefs.getBoolean(AiOptionsActivity.KEY_LOCAL_MODEL_ENABLED, false)
+        if (useLocal) {
+            return SYSTEM_PROMPT_TEMPLATE_LOCAL.replace("{TIME}", currentTime)
+        }
+
         val basePrompt = SYSTEM_PROMPT_TEMPLATE.replace("{TIME}", currentTime)
 
         val mode = prefs.getString(AiOptionsActivity.KEY_SCHEDULE_MODE, AiOptionsActivity.MODE_NONE)

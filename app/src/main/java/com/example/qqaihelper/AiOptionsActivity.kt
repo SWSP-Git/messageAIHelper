@@ -86,6 +86,13 @@ class AiOptionsActivity : BaseActivity() {
 
     private var installing = false
 
+    /** 自动搜寻的取消标志（点击「取消搜寻」时置为 true） */
+    @Volatile
+    private var scanCancelled = false
+
+    /** 是否正在扫描（用于把按钮切换为「取消搜寻」） */
+    private var scanning = false
+
     // ==================== 文件选择器（导入插件 zip） ====================
     private val importZipLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
@@ -152,7 +159,14 @@ class AiOptionsActivity : BaseActivity() {
             importZipLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
         }
         btnInstallLocalModel.setOnClickListener { loadOrReloadLocalModel() }
-        btnAutoScan.setOnClickListener { doAutoScan() }
+        btnAutoScan.setOnClickListener {
+            if (installing && !btnInstallLocalModel.isEnabled && scanning) {
+                // 扫描进行中：此按钮变为「取消搜寻」
+                scanCancelled = true
+            } else {
+                doAutoScan()
+            }
+        }
 
         // ---------- 保存 ----------
         btnSave.setOnClickListener {
@@ -346,11 +360,14 @@ class AiOptionsActivity : BaseActivity() {
 
     // ==================== 自动搜寻 ====================
 
-    /** 扫描手机常见目录，列出可用插件包，点击即安装 */
+    /** 扫描手机常见目录，列出可用插件包，点击即安装；扫描中按钮变为「取消搜寻」 */
     private fun doAutoScan() {
         if (installing) return
         installing = true
-        btnAutoScan.isEnabled = false
+        scanning = true
+        scanCancelled = false
+        btnAutoScan.isEnabled = true
+        btnAutoScan.text = getString(R.string.ai_scan_cancel)
         btnImportPlugin.isEnabled = false
         btnInstallLocalModel.isEnabled = false
         llScanResult.removeAllViews()
@@ -360,18 +377,25 @@ class AiOptionsActivity : BaseActivity() {
 
         CoroutineScope(Dispatchers.IO).launch {
             val found = try {
-                PluginManager.scanForPlugins()
+                PluginManager.scanForPlugins { scanCancelled }
             } catch (t: Throwable) {
                 emptyList()
             }
+            val cancelled = scanCancelled
             withContext(Dispatchers.Main) {
+                scanning = false
                 pbLocalModel.isIndeterminate = false
                 pbLocalModel.visibility = View.GONE
                 installing = false
                 btnAutoScan.isEnabled = true
+                btnAutoScan.text = getString(R.string.ai_scan_button)
                 btnImportPlugin.isEnabled = true
                 btnInstallLocalModel.isEnabled = true
-                renderScanResult(found)
+                if (cancelled) {
+                    tvLocalModelStatus.text = getString(R.string.ai_scan_cancelled)
+                } else {
+                    renderScanResult(found)
+                }
             }
         }
     }

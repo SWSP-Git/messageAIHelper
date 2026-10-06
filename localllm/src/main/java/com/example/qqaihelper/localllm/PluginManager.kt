@@ -232,32 +232,39 @@ object PluginManager {
      * 扫描范围：Download / Documents（递归，跳过 Android 子目录）+ 内部存储根目录（仅顶层）。
      *
      * @param maxDepth 递归深度上限，避免过深遍历
+     * @param isCancelled 每次处理文件前调用；返回 true 时中断扫描（用于「取消搜寻」）
      * @return 找到的候选插件列表（按名称排序）
      */
-    fun scanForPlugins(maxDepth: Int = 4): List<FoundPlugin> {
+    fun scanForPlugins(maxDepth: Int = 4, isCancelled: () -> Boolean = { false }): List<FoundPlugin> {
         val root = android.os.Environment.getExternalStorageDirectory() ?: return emptyList()
         val result = mutableListOf<FoundPlugin>()
         val seen = mutableSetOf<String>()
 
-        fun handleZip(file: File) {
-            if (!seen.add(file.absolutePath)) return
+        fun handleZip(file: File): Boolean {
+            if (isCancelled()) return false
+            if (!seen.add(file.absolutePath)) return true
             readPluginMetaFromZip(file)?.let { result.add(it) }
+            return true
         }
 
         // Download / Documents：递归扫描，跳过 Android/data、Android/obb
-        for (name in listOf("Download", "Documents")) {
+        outer@ for (name in listOf("Download", "Documents")) {
             val dir = File(root, name)
             if (!dir.isDirectory) continue
-            dir.walkTopDown()
+            val files = dir.walkTopDown()
                 .maxDepth(maxDepth)
                 .onEnter { it.name != "Android" }
                 .filter { it.isFile && it.extension.equals("zip", ignoreCase = true) }
-                .forEach { handleZip(it) }
+            for (f in files) {
+                if (!handleZip(f)) break@outer
+            }
         }
 
         // 内部存储根目录：仅顶层文件
-        root.listFiles { f -> f.isFile && f.extension.equals("zip", ignoreCase = true) }
-            ?.forEach { handleZip(it) }
+        if (!isCancelled()) {
+            root.listFiles { f -> f.isFile && f.extension.equals("zip", ignoreCase = true) }
+                ?.forEach { f -> if (isCancelled()) return@forEach else handleZip(f) }
+        }
 
         return result.sortedBy { it.name }
     }
