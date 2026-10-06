@@ -17,6 +17,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
+## [v1.1.3] - 2026-10-07
+
+> 解析健壮性修复 · 发送人 · 工程可测性
+
+### 新增 / Added
+- **👤 发送人解析**：AI 从消息中提取的发送人（如「张三」）现会记录到备忘录并展示（未提取到时自动省略字段，**老数据不受影响**）。
+- **🧪 单元测试体系**：新增 4 个纯 JVM 测试类，共 **55 个用例**（此前仅 1 个模板测试）：
+  - `AiReplyParserTest`（16）：AI 回复字段提取、默认值回退、时间格式边界、**单行输入边界**
+  - `MemoParserTest`（17）：备忘录切分、字段提取、**重要性兼容（老数据默认「中」）**、过滤逻辑
+  - `MessageFilterTest`（13）：关键词过滤（AND / OR）、包名映射、格式容错
+  - `ScheduleWindowTest`（8）：时间窗口判断，重点覆盖**跨零点区间**
+- **⚙️ 持续集成**：新增 GitHub Actions 工作流，push / PR 时自动运行单元测试并编译 Debug APK。
+- **📋 功能建议模板**：新增 `feature_request.md` Issue 模板。
+- **📄 变更日志**：新增 `CHANGELOG.md`，覆盖 v1.0.0 ~ v1.1.3。
+
+### 修复 / Fixed
+- **🐛 修复 AI 回复字段互相污染（重要）**：当 AI 未按格式换行、把多个字段挤在同一行时（如 `【摘要】开会 【重要性】高`），解析结果会把后续字段一并吞入（摘要变成 `开会 【重要性】高`），进而**静默写入错误数据**（如把备忘误判为日程）。已修正字段结束边界，兼容单行与多行输入。
+
+### 重构 / Refactored
+- **🧩 解析逻辑抽离为纯逻辑对象**（零 Android 依赖，便于单测）：
+  - `AiReplyParser`：AI 回复解析（原内嵌于 `QQNotificationListener`）
+  - `MemoParser`：备忘录文本解析与重要性过滤（原内嵌于 `MemoListActivity` / `MemoAdapter`）
+  - `MessageFilter`：关键词过滤与包名映射
+  - `ScheduleWindow`：定时开关时间窗口判断
+- 以上重构**行为完全等价**，`QQNotificationListener` 净减约 45 行。
+
+---
+
 ## [v1.1.2] - 2026-10-06
 
 > 数据持久化 · 中英双语 · 动效升级
@@ -102,9 +130,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
-[未发布 / Unreleased]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.1.2...HEAD
+[未发布 / Unreleased]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.1.3...HEAD
+[v1.1.3]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.1.2...v1.1.3
 [v1.1.2]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.1.1...v1.1.2
 [v1.1.1]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.1.0...v1.1.1
 [v1.1.0]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.0.1...v1.1.0
 [v1.0.1]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.0.0...v1.0.1
 [v1.0.0]: https://github.com/SWSP-Git/messageAIHelper/releases/tag/v1.0.0
+
