@@ -232,6 +232,7 @@ app/src/main/java/com/example/qqaihelper/
 | 代码贡献 | [贡献指南](CONTRIBUTING.md) |
 | 行为规范 | [行为准则](CODE_OF_CONDUCT.md) |
 | 安全漏洞 | [安全政策](SECURITY.md) |
+| 更新日志 | [CHANGELOG.md](CHANGELOG.md) |
 | 详细文档 | [Wiki](https://github.com/SWSP-Git/messageAIHelper/wiki) |
 
 ---
@@ -439,6 +440,7 @@ app/src/main/java/com/example/qqaihelper/
 | Code contribution | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Code of conduct | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) |
 | Security policy | [SECURITY.md](SECURITY.md) |
+| Changelog | [CHANGELOG.md](CHANGELOG.md) |
 | Full docs | [Wiki](https://github.com/SWSP-Git/messageAIHelper/wiki) |
 
 ## 📄 License
