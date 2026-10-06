@@ -54,7 +54,7 @@ class MemoListActivity : BaseActivity() {
     private fun loadMemos() {
         val memoFile = StorageHelper.getMemoFile(applicationContext)
         allMemos = if (memoFile.exists()) {
-            memoFile.readText().split("\n\n").filter { it.isNotBlank() }
+            MemoParser.splitMemos(memoFile.readText())
         } else {
             emptyList()
         }
@@ -68,21 +68,6 @@ class MemoListActivity : BaseActivity() {
 
     /** 根据 showAll 状态过滤列表 */
     private fun applyFilter() {
-        val filtered = if (showAll) {
-            allMemos
-        } else {
-            allMemos.filter { !isLowImportance(it) }
-        }
-        recyclerView.adapter = MemoAdapter(filtered)
-    }
-
-    /**
-     * 判断一条备忘是否为「低」重要性。
-     * 无重要性字段时视为「中」（不过滤）。
-     */
-    private fun isLowImportance(memoText: String): Boolean {
-        val line = memoText.split("\n").find { it.startsWith("重要性:") } ?: return false
-        val value = line.substringAfter(":").trim()
-        return value == "低"
+        recyclerView.adapter = MemoAdapter(MemoParser.filter(allMemos, showAll))
     }
 }

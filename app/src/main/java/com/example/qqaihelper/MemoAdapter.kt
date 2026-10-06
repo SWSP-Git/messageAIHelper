@@ -105,7 +105,5 @@ class MemoAdapter(private val memoList: List<String>) : RecyclerView.Adapter<Mem
     }
 
     private fun extract(lines: List<String>, prefix: String): String? =
-        lines.find { it.startsWith("$prefix:") }
-            ?.substringAfter(":")
-            ?.trim()
+        MemoParser.extract(lines, prefix)
 }
