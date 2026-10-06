@@ -23,9 +23,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### 新增 / Added
 - **👤 发送人解析**：AI 从消息中提取的发送人（如「张三」）现会记录到备忘录并展示（未提取到时自动省略字段，**老数据不受影响**）。
-- **🧪 单元测试体系**：新增 4 个纯 JVM 测试类，共 **55 个用例**（此前仅 1 个模板测试）：
+- **🧪 单元测试体系**：新增 4 个纯 JVM 测试类，共 **59 个用例**（此前仅 1 个模板测试）：
   - `AiReplyParserTest`（16）：AI 回复字段提取、默认值回退、时间格式边界、**单行输入边界**
-  - `MemoParserTest`（17）：备忘录切分、字段提取、**重要性兼容（老数据默认「中」）**、过滤逻辑
+  - `MemoParserTest`（21）：备忘录切分、字段提取、**重要性兼容（老数据默认「中」）**、过滤逻辑、**多行「原文」完整性**
   - `MessageFilterTest`（13）：关键词过滤（AND / OR）、包名映射、格式容错
   - `ScheduleWindowTest`（8）：时间窗口判断，重点覆盖**跨零点区间**
 - **⚙️ 持续集成**：新增 GitHub Actions 工作流，push / PR 时自动运行单元测试并编译 Debug APK。
