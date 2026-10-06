@@ -117,6 +117,8 @@
     <string name="ai_scan_found">找到 %1$d 个可用插件包，点击即可安装：</string>
     <string name="ai_scan_installing">正在安装：%1$s</string>
     <string name="ai_scan_installed_tag">（已安装）</string>
+    <string name="ai_plugin_total">共 %1$d 个插件，合计占用 %2$s</string>
+    <string name="ai_plugin_switching">正在切换并加载模型…</string>
     <string name="ai_plugin_load">🔄 加载 / 重载</string>
     <string name="ai_port_label">本地服务端口</string>
     <string name="ai_port_invalid">本地服务端口必须在 1024-65535 之间</string>

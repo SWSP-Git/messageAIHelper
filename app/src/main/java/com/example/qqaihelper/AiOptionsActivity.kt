@@ -77,6 +77,7 @@ class AiOptionsActivity : BaseActivity() {
     private lateinit var btnAutoScan: Button
     private lateinit var llScanResult: LinearLayout
     private lateinit var llPluginList: LinearLayout
+    private lateinit var tvPluginTotal: TextView
     private lateinit var tvNoPlugin: TextView
     private lateinit var radioNone: RadioButton
     private lateinit var radioCodeCheck: RadioButton
@@ -112,6 +113,7 @@ class AiOptionsActivity : BaseActivity() {
         btnAutoScan = findViewById(R.id.btnAutoScan)
         llScanResult = findViewById(R.id.llScanResult)
         llPluginList = findViewById(R.id.llPluginList)
+        tvPluginTotal = findViewById(R.id.tvPluginTotal)
         tvNoPlugin = findViewById(R.id.tvNoPlugin)
 
         val radioGroup = findViewById<RadioGroup>(R.id.radioGroupScheduleMode)
@@ -215,6 +217,17 @@ class AiOptionsActivity : BaseActivity() {
         val currentId = LocalLlmManager.currentPlugin(ctx)?.id
         tvNoPlugin.visibility = if (plugins.isEmpty()) View.VISIBLE else View.GONE
 
+        // 总占用汇总
+        if (plugins.isEmpty()) {
+            tvPluginTotal.visibility = View.GONE
+        } else {
+            val totalBytes = plugins.sumOf { it.sizeBytes }
+            tvPluginTotal.text = getString(
+                R.string.ai_plugin_total, plugins.size, PluginManager.humanSize(totalBytes)
+            )
+            tvPluginTotal.visibility = View.VISIBLE
+        }
+
         for (p in plugins) {
             val isCurrent = p.id == currentId
             val row = LinearLayout(this).apply {
@@ -242,10 +255,8 @@ class AiOptionsActivity : BaseActivity() {
                 isAllCaps = false
                 isEnabled = !isCurrent
                 setOnClickListener {
-                    PluginManager.setCurrent(applicationContext, p.id)
-                    LocalLlmManager.unload()
-                    refreshLocalStatus()
-                    rebuildPluginList()
+                    // 切换当前插件并立即加载（省去再点「加载 / 重载」）
+                    switchAndLoadPlugin(p)
                 }
             }
             val btnDel = Button(this).apply {
@@ -460,6 +471,40 @@ class AiOptionsActivity : BaseActivity() {
             } ?: -1L
         } catch (t: Throwable) {
             -1L
+        }
+    }
+
+    /** 切换当前插件并立即加载进内存（后台执行，带进度提示） */
+    private fun switchAndLoadPlugin(p: PluginManager.PluginInfo) {
+        if (installing) return
+        installing = true
+        btnAutoScan.isEnabled = false
+        btnImportPlugin.isEnabled = false
+        btnInstallLocalModel.isEnabled = false
+        pbLocalModel.visibility = View.VISIBLE
+        pbLocalModel.isIndeterminate = true
+        tvLocalModelStatus.text = getString(R.string.ai_plugin_switching)
+
+        val ctx = applicationContext
+        CoroutineScope(Dispatchers.IO).launch {
+            // 切到新插件（unload 会释放旧引擎），再加载
+            PluginManager.setCurrent(ctx, p.id)
+            LocalLlmManager.unload()
+            val ok = LocalLlmManager.ensureLoaded(ctx)
+
+            withContext(Dispatchers.Main) {
+                pbLocalModel.isIndeterminate = false
+                pbLocalModel.visibility = View.GONE
+                installing = false
+                btnAutoScan.isEnabled = true
+                btnImportPlugin.isEnabled = true
+                btnInstallLocalModel.isEnabled = true
+                if (!ok) {
+                    Toast.makeText(this@AiOptionsActivity, getString(R.string.ai_plugin_loaded_fail), Toast.LENGTH_LONG).show()
+                }
+                refreshLocalStatus()
+                rebuildPluginList()
+            }
         }
     }
 

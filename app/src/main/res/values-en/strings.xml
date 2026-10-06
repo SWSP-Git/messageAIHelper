@@ -117,6 +117,8 @@
     <string name="ai_scan_found">Found %1$d usable plugin(s). Tap to install:</string>
     <string name="ai_scan_installing">Installing: %1$s</string>
     <string name="ai_scan_installed_tag"> (installed)</string>
+    <string name="ai_plugin_total">%1$d plugin(s), %2$s total</string>
+    <string name="ai_plugin_switching">Switching and loading model…</string>
     <string name="ai_plugin_load">🔄 Load / Reload</string>
     <string name="ai_port_label">Local Service Port</string>
     <string name="ai_port_invalid">Local service port must be between 1024 and 65535</string>
