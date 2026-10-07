@@ -12,6 +12,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [未发布 / Unreleased]
 
+### 计划中 / Planned
+- 🤖 更多本地模型插件（不同尺寸 / 量化级别）
+
+---
+
+## [v1.2.2] - 2026-10-08
+
+> 应用内下载模型 · 国内源提速 · 备忘交互优化
+
 ### 新增 / Added
 - **⬇️ 应用内下载模型（重要）**：在「AI 与日程设置 → 本地模型」新增「下载模型」按钮，可直接下载模型插件（无需手动导入）。
   - **国内源（ModelScope）**：模型托管于 ModelScope 国内 CDN，直连速度快且稳定，支持分段下载。
@@ -28,9 +37,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### 修复 / Fixed
 - **🔧 修复下载崩溃**：切换下载线程数时，旧任务的协程会访问已被替换的进度数组导致越界崩溃；现已用「代次隔离 + 数组参数化」修复。
 - **🔧 修复分段数据错乱**：分段请求现强制要求 HTTP 206（Partial Content），避免服务器忽略 Range 时写入错位；新增分段支持探测，不支持时自动回退单线程。
-
-### 计划中 / Planned
-- 🤖 更多本地模型插件（不同尺寸 / 量化级别）
 
 ---
 
@@ -197,7 +203,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
-[未发布 / Unreleased]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.2.1...HEAD
+[未发布 / Unreleased]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.2.2...HEAD
+[v1.2.2]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.2.1...v1.2.2
 [v1.2.1]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.2.0...v1.2.1
 [v1.2.0]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.1.3...v1.2.0
 [v1.1.3]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.1.2...v1.1.3
