@@ -66,6 +66,9 @@ object ModelDownloader {
     @Volatile private var state: State = State.IDLE
     @Volatile private var cancelled = false
 
+    /** 下载代次：每次 start() 递增，旧协程检测到代次变化后立即退出 */
+    @Volatile private var generation = 0
+
     private var entry: ModelEntry? = null
     private var totalBytes = 0L
     private var segments = DEFAULT_CONCURRENCY
@@ -79,7 +82,8 @@ object ModelDownloader {
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(60, TimeUnit.SECONDS)
+        // 高并发 + 移动网络下，60s 无数据易误判超时；放宽到 120s
+        .readTimeout(120, TimeUnit.SECONDS)
         .writeTimeout(60, TimeUnit.SECONDS)
         .retryOnConnectionFailure(true)
         // 强制 HTTP/1.1：
@@ -142,9 +146,9 @@ object ModelDownloader {
     }
 
     /** 保存分段进度（节流调用） */
-    private fun saveProgress(context: Context, model: ModelEntry) {
+    private fun saveProgress(context: Context, model: ModelEntry, arr: LongArray) {
         try {
-            val text = segmentDone.joinToString(",")
+            val text = arr.joinToString(",")
             progressFile(context, model).writeText(text)
         } catch (t: Throwable) { /* 忽略 */ }
     }
@@ -165,13 +169,16 @@ object ModelDownloader {
         cancelled = false
         totalBytes = model.sizeBytes
         segments = threads.coerceIn(MIN_THREADS, MAX_THREADS)
+        // 递增代次：让上一次任务的协程立即失效（cancel 是异步的，不能只靠它）
+        val myGen = ++generation
         // 恢复断点：读取上次保存的各段进度（线程数不同则无法对应，重置）
-        segmentDone = loadProgress(context, model, segments)
-        AppLogger.d("下载启动: " + segments + " 线程，已恢复 " + segmentDone.sum() + " 字节")
+        val arr = loadProgress(context, model, segments)
+        segmentDone = arr
+        AppLogger.d("下载启动: " + segments + " 线程(代次 " + myGen + ")，已恢复 " + arr.sum() + " 字节")
 
         startForegroundService()
         job?.cancel()
-        job = scope.launch { runDownload(model) }
+        job = scope.launch { runDownload(model, myGen, arr) }
         notifyProgress()
     }
 
@@ -189,9 +196,11 @@ object ModelDownloader {
         val model = entry ?: return
         cancelled = false
         state = State.PREPARING
+        val myGen = ++generation
+        val arr = segmentDone
         startForegroundService()
         job?.cancel()
-        job = scope.launch { runDownload(model) }
+        job = scope.launch { runDownload(model, myGen, arr) }
         notifyProgress()
     }
 
@@ -240,7 +249,7 @@ object ModelDownloader {
 
     // ==================== 主流程 ====================
 
-    private suspend fun runDownload(model: ModelEntry) {
+    private suspend fun runDownload(model: ModelEntry, myGen: Int, arr: LongArray) {
         val ctx = appContext ?: return
         val dest = targetFile(ctx, model)
         val part = File(dest.absolutePath + ".part")
@@ -263,7 +272,7 @@ object ModelDownloader {
             }
 
             state = State.DOWNLOADING
-            val ok = downloadAll(model, part)
+            val ok = downloadAll(model, part, myGen, arr)
             if (cancelled) { state = State.PAUSED; notifyProgress(); return }
             if (!ok) {
                 AppLogger.e("下载失败: 部分分段未完成（已完成 " + segmentDone.sum() + "/" + totalBytes + " 字节）")
@@ -301,35 +310,36 @@ object ModelDownloader {
         }
     }
 
-    private suspend fun downloadAll(model: ModelEntry, part: File): Boolean {
+    private suspend fun downloadAll(model: ModelEntry, part: File, myGen: Int, arr: LongArray): Boolean {
         if (totalBytes <= 0L) {
             AppLogger.d("下载: 未知文件大小，回退单线程")
-            return downloadSingle(model, part)
+            return downloadSingle(model, part, myGen, arr)
         }
         val segSize = totalBytes / segments
         if (segSize <= 0L) {
             AppLogger.d("下载: 分段过小，回退单线程")
-            return downloadSingle(model, part)
+            return downloadSingle(model, part, myGen, arr)
         }
         // 先探测服务器是否支持分段（Range）；不支持则回退单线程
         if (!probeRangeSupport(model.url)) {
             AppLogger.d("下载: 服务器不支持分段（未返回 206），回退单线程")
-            return downloadSingle(model, part)
+            return downloadSingle(model, part, myGen, arr)
         }
-        AppLogger.d("下载开始: $segments 线程，总大小 $totalBytes 字节")
+        AppLogger.d("下载开始: " + segments + " 线程，总大小 " + totalBytes + " 字节")
 
         val startTime = System.currentTimeMillis()
-        val baseline = segmentDone.sum()
+        val baseline = arr.sum()
 
         // 进度循环（同时定期持久化断点）
         val ctx = appContext
         val progressJob = scope.launch {
             while (isActive) {
-                val done = segmentDone.sum()
+                if (myGen != generation) break
+                val done = arr.sum()
                 val elapsed = (System.currentTimeMillis() - startTime).coerceAtLeast(1L)
                 val speed = (done - baseline) * 1000 / elapsed
                 notifyProgress(done, speed)
-                if (ctx != null) saveProgress(ctx, model)
+                if (ctx != null) saveProgress(ctx, model, arr)
                 delay(500)
             }
         }
@@ -339,7 +349,7 @@ object ModelDownloader {
                 async {
                     val start = i.toLong() * segSize
                     val end = if (i == segments - 1) totalBytes - 1 else (i + 1).toLong() * segSize - 1
-                    downloadSegment(model.url, part, i, start, end)
+                    downloadSegment(model.url, part, i, start, end, myGen, arr)
                 }
             }.awaitAll()
         }
@@ -348,11 +358,12 @@ object ModelDownloader {
         return results.all { it }
     }
 
-    private suspend fun downloadSegment(url: String, part: File, index: Int, start: Long, end: Long): Boolean {
+    private suspend fun downloadSegment(url: String, part: File, index: Int, start: Long, end: Long, myGen: Int, arr: LongArray): Boolean {
+        if (index >= arr.size) return true   // 线程数已变更，本段作废
         var attempt = 0
         while (attempt < MAX_RETRY) {
-            if (cancelled) return false
-            val from = start + segmentDone[index]
+            if (cancelled || myGen != generation) return false   // 旧任务立即退出
+            val from = start + arr[index]
             if (from > end) return true
             try {
                 val req = Request.Builder()
@@ -382,11 +393,11 @@ object ModelDownloader {
                             if (n <= 0) break
                             raf.write(buf, 0, n)
                             pos += n
-                            segmentDone[index] += n
+                            arr[index] += n
                         }
                     }
                 }
-                if (start + segmentDone[index] > end) return true
+                if (start + arr[index] > end) return true
                 attempt++
             } catch (t: Throwable) {
                 attempt++
@@ -394,10 +405,10 @@ object ModelDownloader {
                 if (attempt < MAX_RETRY) delay(1000L * attempt)
             }
         }
-        return start + segmentDone[index] > end
+        return index < arr.size && start + arr[index] > end
     }
 
-    private suspend fun downloadSingle(model: ModelEntry, part: File): Boolean {
+    private suspend fun downloadSingle(model: ModelEntry, part: File, myGen: Int, arr: LongArray): Boolean {
         return try {
             val req = Request.Builder()
                 .url(model.url)
@@ -414,12 +425,12 @@ object ModelDownloader {
                         val buf = ByteArray(BUFFER)
                         var done = 0L
                         while (true) {
-                            if (cancelled) return false
+                            if (cancelled || myGen != generation) return false
                             val n = input.read(buf)
                             if (n <= 0) break
                             out.write(buf, 0, n)
                             done += n
-                            segmentDone[0] = done
+                            if (arr.isNotEmpty()) arr[0] = done
                             notifyProgress(done, 0L)
                         }
                     }
