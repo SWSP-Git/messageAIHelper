@@ -74,12 +74,13 @@ All data is processed locally. Only AI parsing sends message text to your config
 ### 🧠 本地小模型（离线推理）
 
 - **完全离线**：基于 [MNN](https://github.com/alibaba/MNN) 引擎在手机本地运行小模型（如 Qwen2.5-1.5B 4bit），无需联网、不消耗 API 额度
+- **⬇️ 应用内下载**：内置「下载模型」按钮，从 **ModelScope 国内 CDN** 直接下载（多线程加速、断点续传、SHA-256 校验、完成自动安装）
 - **插件化分发**：模型以 `.zip` 插件导入（含 `plugin.json` 清单 + 权重），APK 本体保持轻量
 - **自动搜寻**：一键扫描 Download / Documents 目录，识别插件包并列出，点击即安装
 - **模型来源二选一**：在「AI 与日程设置」中切换「云端 / 本地」，本地服务运行于 `127.0.0.1`
 - 支持安装多个插件、自由切换（同一时刻加载一个）
 
-> ⚠️ 本地推理仅支持 **arm64-v8a** 架构；模型插件需从 [Releases](https://github.com/SWSP-Git/messageAIHelper/releases) 单独下载。
+> ⚠️ 本地推理仅支持 **arm64-v8a** 架构。
 
 ### 🌐 中英双语
 
@@ -171,16 +172,21 @@ All data is processed locally. Only AI parsing sends message text to your config
 
 ### 6. 启用本地模型（可选，离线）
 
-1. 从 [Releases](https://github.com/SWSP-Git/messageAIHelper/releases) 下载模型插件 `qwen2.5-1.5b-mnn.zip`
-2. 把 zip 放到手机 **Download** 目录
-3. 进入「备忘录 → 右上角齿轮 → AI 与日程设置」
-4. 选「本地模型（离线）」→ 点「🔍 自动搜寻」→ 点击列表中的插件安装
-   （也可点「📥 导入插件 (.zip)」手动选择）
-5. 安装后点「🔄 加载 / 重载」载入内存（首次约需数十秒）
-6. 点「保存设置」
+进入「备忘录 → 右上角齿轮 → AI 与日程设置」，选「本地模型（离线）」，然后三选一获取模型：
 
-> ⚠️ 需先授予「所有文件访问权限」（更多设置 → 存储位置），否则自动搜寻扫不到文件。
+**方式一（推荐）：应用内下载**
+1. 点「⬇️ 下载模型」→ 选择 Qwen2.5
+2. 设置下载线程数（建议 16–32）→ 开始下载
+3. 下载完成会自动校验并安装
+
+**方式二：手动导入**：点「📥 导入插件 (.zip)」选择已下载的 zip
+
+**方式三：自动搜寻**：把 zip 放到手机 Download 目录，点「🔍 自动搜寻」
+
+安装后点「🔄 加载 / 重载」载入内存（首次约需数十秒），再点「保存设置」。
+
 > ⚠️ 仅支持 arm64-v8a 架构；1.5B 模型约占 1–2GB 内存。
+> ⚠️ 手动导入 / 自动搜寻需先授予「所有文件访问权限」（更多设置 → 存储位置）。
 
 ### 7. Webhook 使用示例
 
@@ -215,9 +221,12 @@ app/src/main/java/com/example/qqaihelper/
 ├── HomeActivity.kt              # 主入口（卡片式仪表盘）
 ├── MainActivity.kt              # 配置中心（API、白名单、过滤）
 ├── SettingsActivity.kt          # 更多设置（保活、定时、Webhook、语言、备份）
-├── AiOptionsActivity.kt         # AI 与日程设置（三档模式）
-├── MemoListActivity.kt          # 备忘录列表（重要性过滤）
+├── AiOptionsActivity.kt         # AI 与日程设置（三档模式 + 本地模型）
+├── MemoListActivity.kt          # 备忘录列表（折叠/多选）
 ├── LogViewerActivity.kt         # 日志查看器
+├── ModelCatalog.kt              # 可下载模型清单（可扩展）
+├── ModelDownloader.kt           # 多线程下载（分段/续传/校验）
+├── DownloadService.kt           # 下载前台服务（进度通知）
 ├── QQNotificationListener.kt    # 核心服务：监听 → AI → 写入
 ├── AiReplyParser.kt             # 纯逻辑：AI 回复解析（可单测）
 ├── MemoParser.kt                # 纯逻辑：备忘录解析与过滤（可单测）
@@ -346,12 +355,13 @@ All data processed locally. Only AI parsing sends message text to your configure
 ### 🧠 Local Model (Offline Inference)
 
 - **Fully offline**: runs a small model (e.g., Qwen2.5-1.5B 4bit) on-device via the [MNN](https://github.com/alibaba/MNN) engine; no network, no API quota
+- **⬇️ In-app download**: built-in "Download Model" button, fetching from **ModelScope CDN** (multi-thread, resumable, SHA-256 verified, auto-install)
 - **Plugin-based**: models imported as `.zip` plugins (with `plugin.json` + weights); keeps the APK lightweight
 - **Auto Scan**: one-tap scan of Download / Documents to find and install plugin packages
 - **Cloud/Local switch**: toggle in "AI & Schedule"; local service runs at `127.0.0.1`
 - Multiple plugins supported; one loaded at a time
 
-> ⚠️ Local inference supports **arm64-v8a** only; download the model plugin separately from [Releases](https://github.com/SWSP-Git/messageAIHelper/releases).
+> ⚠️ Local inference supports **arm64-v8a** only.
 
 ### 🌐 Bilingual (Chinese / English)
 
@@ -432,16 +442,21 @@ All data processed locally. Only AI parsing sends message text to your configure
 
 ### 6. Enable Local Model (Optional, Offline)
 
-1. Download the model plugin `qwen2.5-1.5b-mnn.zip` from [Releases](https://github.com/SWSP-Git/messageAIHelper/releases)
-2. Put the zip into the phone's **Download** folder
-3. Go to "Memo → gear icon → AI & Schedule"
-4. Select "Local Model (Offline)" → tap "🔍 Auto Scan" → tap the plugin to install
-   (or tap "📥 Import Plugin (.zip)" to pick it manually)
-5. Tap "🔄 Load / Reload" to load into memory (first load takes tens of seconds)
-6. Tap "Save"
+Go to "Memo → gear icon → AI & Schedule", select "Local Model (Offline)", then obtain the model in one of three ways:
 
-> ⚠️ Grant "All files access" first (More Settings → Storage Location), otherwise Auto Scan finds nothing.
+**Option 1 (recommended): In-app download**
+1. Tap "⬇️ Download Model" → choose Qwen2.5
+2. Set download threads (16–32 suggested) → Start
+3. It auto-verifies and installs when done
+
+**Option 2: Manual import**: tap "📥 Import Plugin (.zip)" and pick a downloaded zip
+
+**Option 3: Auto Scan**: put the zip in Download, tap "🔍 Auto Scan"
+
+Then tap "🔄 Load / Reload" to load into memory (first load takes tens of seconds), and "Save".
+
 > ⚠️ arm64-v8a only; a 1.5B model uses ~1–2GB RAM.
+> ⚠️ Manual import / Auto Scan require "All files access" (More Settings → Storage Location).
 
 ### 7. Webhook Example
 
@@ -472,9 +487,12 @@ app/src/main/java/com/example/qqaihelper/
 ├── HomeActivity.kt              # Home dashboard
 ├── MainActivity.kt              # Config Center (API, whitelist, filters)
 ├── SettingsActivity.kt          # More Settings (keep-alive, schedule, webhook, language, backup)
-├── AiOptionsActivity.kt         # AI & Schedule Settings
-├── MemoListActivity.kt          # Memo list (importance filter)
+├── AiOptionsActivity.kt         # AI & Schedule Settings (+ local model)
+├── MemoListActivity.kt          # Memo list (collapse/multi-select)
 ├── LogViewerActivity.kt         # Log viewer
+├── ModelCatalog.kt              # Downloadable model catalog
+├── ModelDownloader.kt           # Multi-thread downloader
+├── DownloadService.kt           # Download foreground service
 ├── QQNotificationListener.kt    # Core service: listen → AI → write
 ├── AiReplyParser.kt             # Pure logic: AI reply parser (unit-testable)
 ├── MemoParser.kt                # Pure logic: memo parser & filter (unit-testable)
