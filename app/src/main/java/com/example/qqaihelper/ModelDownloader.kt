@@ -82,6 +82,11 @@ object ModelDownloader {
         .readTimeout(60, TimeUnit.SECONDS)
         .writeTimeout(60, TimeUnit.SECONDS)
         .retryOnConnectionFailure(true)
+        // 强制 HTTP/1.1：
+        // HTTP/2 会把所有 Range 请求复用**同一条 TCP 连接**（多路复用），
+        // 各流共享该连接的带宽，导致「加线程数几乎不提速」。
+        // 改用 HTTP/1.1 后，每个并发请求独占一条连接，才能真正并行分段下载。
+        .protocols(listOf(okhttp3.Protocol.HTTP_1_1))
         .dispatcher(Dispatcher().apply {
             maxRequests = MAX_THREADS + 4
             maxRequestsPerHost = MAX_THREADS + 4
@@ -306,6 +311,7 @@ object ModelDownloader {
                 val req = Request.Builder()
                     .url(url)
                     .header("Range", "bytes=" + from + "-" + end)
+                    .header("Accept-Encoding", "identity")
                     .header("User-Agent", "messageAIHelper")
                     .build()
                 client.newCall(req).execute().use { resp ->
@@ -341,6 +347,7 @@ object ModelDownloader {
         return try {
             val req = Request.Builder()
                 .url(model.url)
+                .header("Accept-Encoding", "identity")
                 .header("User-Agent", "messageAIHelper")
                 .build()
             client.newCall(req).execute().use { resp ->
