@@ -123,6 +123,7 @@ object ModelDownloader {
         totalBytes = model.sizeBytes
         if (segmentDone.size != segments) segmentDone = LongArray(segments)
 
+        startForegroundService()
         job?.cancel()
         job = scope.launch { runDownload(model) }
         notifyProgress()
@@ -133,6 +134,7 @@ object ModelDownloader {
         cancelled = true
         job?.cancel()
         state = State.PAUSED
+        stopForegroundService()
         notifyProgress()
     }
 
@@ -141,6 +143,7 @@ object ModelDownloader {
         val model = entry ?: return
         cancelled = false
         state = State.PREPARING
+        startForegroundService()
         job?.cancel()
         job = scope.launch { runDownload(model) }
         notifyProgress()
@@ -159,6 +162,7 @@ object ModelDownloader {
             }
         }
         segmentDone = LongArray(segments)
+        stopForegroundService()
         notifyProgress()
     }
 
@@ -168,6 +172,25 @@ object ModelDownloader {
         state = State.IDLE
         segmentDone = LongArray(segments)
         notifyProgress()
+    }
+
+    // ==================== 前台服务 ====================
+
+    private fun startForegroundService() {
+        val ctx = appContext ?: return
+        runCatching {
+            val i = android.content.Intent(ctx, DownloadService::class.java)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                ctx.startForegroundService(i)
+            } else {
+                ctx.startService(i)
+            }
+        }
+    }
+
+    private fun stopForegroundService() {
+        val ctx = appContext ?: return
+        runCatching { ctx.stopService(android.content.Intent(ctx, DownloadService::class.java)) }
     }
 
     // ==================== 主流程 ====================
@@ -216,6 +239,7 @@ object ModelDownloader {
             }
             state = State.DONE
             notifyProgress()
+            stopForegroundService()
             postFinished(dest)
         } catch (t: Throwable) {
             if (cancelled) { state = State.PAUSED; notifyProgress() }
@@ -366,13 +390,27 @@ object ModelDownloader {
     private fun fail(message: String) {
         state = State.ERROR
         notifyProgress(message = message)
+        stopForegroundService()
         postFinished(null)
     }
 
     private fun notifyProgress(downloaded: Long = segmentDone.sum(), speed: Long = 0L, message: String? = null) {
         val p = Progress(state, downloaded, totalBytes, speed, message)
+        updateForegroundNotification(p)
         val l = listener ?: return
         mainHandler.post { l.onProgress(p) }
+    }
+
+    /** 同步前台服务通知栏进度 */
+    private fun updateForegroundNotification(p: Progress) {
+        val ctx = appContext ?: return
+        val pct = if (p.total > 0) (p.downloaded * 100 / p.total).toInt() else 0
+        val text = when (p.state) {
+            State.PREPARING -> ctx.getString(R.string.download_notif_preparing)
+            State.DONE -> ctx.getString(R.string.download_notif_done)
+            else -> ctx.getString(R.string.download_notif_progress, pct, ModelCatalog.humanSize(p.speedBps) + "/s")
+        }
+        DownloadService.updateNotification(ctx.getString(R.string.download_notif_title), text, pct)
     }
 
     private fun postFinished(file: File?) {

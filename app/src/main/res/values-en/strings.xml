@@ -134,6 +134,12 @@
     <string name="ai_download_cancelled">Download cancelled</string>
     <string name="ai_download_remain_unknown">--</string>
     <string name="ai_download_installing_hint">The downloaded plugin was detected; tap to install</string>
+    <string name="download_channel_name">Model Download</string>
+    <string name="download_channel_desc">Shows download progress to avoid background interruption</string>
+    <string name="download_notif_title">Downloading model</string>
+    <string name="download_notif_preparing">Preparing…</string>
+    <string name="download_notif_progress">%1$d%% · %2$s</string>
+    <string name="download_notif_done">Download complete</string>
     <string name="ai_scan_installed_tag"> (installed)</string>
     <string name="ai_plugin_total">%1$d plugin(s), %2$s total</string>
     <string name="ai_plugin_switching">Switching and loading model…</string>

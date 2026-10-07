@@ -82,6 +82,12 @@
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
+        <!-- 模型下载前台服务：提升进程优先级，避免下载被后台中断 -->
+        <service
+            android:name=".DownloadService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
         <!-- 开机自启广播接收器 -->
         <receiver
             android:name=".BootReceiver"
