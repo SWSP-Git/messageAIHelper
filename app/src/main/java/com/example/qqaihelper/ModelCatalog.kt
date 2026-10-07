@@ -48,8 +48,8 @@ object ModelCatalog {
         ModelEntry(
             id = "qwen2.5-1.5b-mnn",
             name = "Qwen2.5 1.5B Instruct (MNN 4bit)",
-            description = "通用中文小模型，约 839 MB，适合离线消息解析",
-            url = "https://github.com/SWSP-Git/messageAIHelper/releases/download/v1.2.0/qwen2.5-1.5b-mnn.zip",
+            description = "通用中文小模型，约 839 MB，适合离线消息解析（国内源，速度快）",
+            url = "https://modelscope.cn/models/mfxq2l/qwen2.5-1.5B-mnn/resolve/master/qwen2.5-1.5b-mnn.zip",
             sizeBytes = 879_616_644L,
             sha256 = "0a1d3074acf5b6437d046b5f03cd57aeac6cad4cb16f09a0068a57ab62a2960a",
         ),

@@ -62,6 +62,10 @@ object ModelDownloader {
     private const val BUFFER = 256 * 1024
     private const val MAX_RETRY = 3
 
+    /** 浏览器 UA：ModelScope 等源对空 UA 返回 403，必须带常规 UA */
+    private const val USER_AGENT =
+        "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36"
+
     @Volatile private var appContext: Context? = null
     @Volatile private var state: State = State.IDLE
     @Volatile private var cancelled = false
@@ -370,7 +374,7 @@ object ModelDownloader {
                     .url(url)
                     .header("Range", "bytes=" + from + "-" + end)
                     .header("Accept-Encoding", "identity")
-                    .header("User-Agent", "messageAIHelper")
+                    .header("User-Agent", USER_AGENT)
                     .build()
                 client.newCall(req).execute().use { resp ->
                     // 分段下载必须要求 206（Partial Content）；
@@ -413,7 +417,7 @@ object ModelDownloader {
             val req = Request.Builder()
                 .url(model.url)
                 .header("Accept-Encoding", "identity")
-                .header("User-Agent", "messageAIHelper")
+                .header("User-Agent", USER_AGENT)
                 .build()
             client.newCall(req).execute().use { resp ->
                 if (!resp.isSuccessful) return false
@@ -449,7 +453,7 @@ object ModelDownloader {
             val req = Request.Builder().url(url)
                 .header("Range", "bytes=0-0")
                 .header("Accept-Encoding", "identity")
-                .header("User-Agent", "messageAIHelper")
+                .header("User-Agent", USER_AGENT)
                 .build()
             client.newCall(req).execute().use { resp -> resp.code == 206 }
         } catch (t: Throwable) {
@@ -459,10 +463,18 @@ object ModelDownloader {
     }
 
     private fun probeSize(url: String): Long {
+        // 用 GET + Range 读取总大小（比 HEAD 更兼容，部分源不支持 HEAD）
         return try {
-            val req = Request.Builder().url(url).head().header("User-Agent", "messageAIHelper").build()
+            val req = Request.Builder().url(url)
+                .header("Range", "bytes=0-0")
+                .header("Accept-Encoding", "identity")
+                .header("User-Agent", USER_AGENT)
+                .build()
             client.newCall(req).execute().use { resp ->
-                resp.header("Content-Length")?.toLongOrNull() ?: -1L
+                // 优先从 Content-Range 解析总大小（形如 "bytes 0-0/879616644"）
+                resp.header("Content-Range")?.substringAfter("/")?.toLongOrNull()
+                    ?: resp.header("Content-Length")?.toLongOrNull()
+                    ?: -1L
             }
         } catch (t: Throwable) { -1L }
     }
