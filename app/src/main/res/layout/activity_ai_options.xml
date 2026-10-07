@@ -150,6 +150,78 @@
                             android:textColor="#9E9E9E"/>
 
                         <Button
+                            android:id="@+id/btnDownloadModel"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="46dp"
+                            android:layout_marginTop="12dp"
+                            android:text="@string/ai_download_button"
+                            android:textColor="#FFFFFF"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            android:textAllCaps="false"
+                            android:background="@drawable/btn_primary_selector"/>
+
+                        <!-- 下载进度区（默认隐藏） -->
+                        <LinearLayout
+                            android:id="@+id/llDownloadPanel"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_marginTop="8dp"
+                            android:visibility="gone">
+
+                            <TextView
+                                android:id="@+id/tvDownloadStatus"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textSize="12sp"
+                                android:textColor="#424242"/>
+
+                            <ProgressBar
+                                android:id="@+id/pbDownload"
+                                style="?android:attr/progressBarStyleHorizontal"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:max="100"
+                                android:progress="0"/>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginTop="6dp">
+
+                                <Button
+                                    android:id="@+id/btnDownloadPauseResume"
+                                    android:layout_width="0dp"
+                                    android:layout_weight="1"
+                                    android:layout_height="wrap_content"
+                                    android:minHeight="42dp"
+                                    android:layout_marginEnd="4dp"
+                                    android:text="@string/ai_download_pause"
+                                    android:textSize="12sp"
+                                    android:textAllCaps="false"
+                                    android:background="@drawable/btn_secondary_selector"
+                                    android:textColor="#FFFFFF"/>
+
+                                <Button
+                                    android:id="@+id/btnDownloadCancel"
+                                    android:layout_width="0dp"
+                                    android:layout_weight="1"
+                                    android:layout_height="wrap_content"
+                                    android:minHeight="42dp"
+                                    android:layout_marginStart="4dp"
+                                    android:text="@string/ai_download_cancel"
+                                    android:textSize="12sp"
+                                    android:textAllCaps="false"
+                                    android:background="@drawable/btn_secondary_selector"
+                                    android:textColor="#FFFFFF"/>
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <Button
                             android:id="@+id/btnAutoScan"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"

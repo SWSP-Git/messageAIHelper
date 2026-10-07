@@ -19,6 +19,7 @@ import androidx.appcompat.app.AlertDialog
 import com.example.qqaihelper.localllm.LocalLlmEngine
 import com.example.qqaihelper.localllm.LocalLlmManager
 import com.example.qqaihelper.localllm.PluginManager
+import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -76,6 +77,12 @@ class AiOptionsActivity : BaseActivity() {
     private lateinit var btnImportPlugin: Button
     private lateinit var btnAutoScan: Button
     private lateinit var llScanResult: LinearLayout
+    private lateinit var btnDownloadModel: Button
+    private lateinit var llDownloadPanel: LinearLayout
+    private lateinit var tvDownloadStatus: TextView
+    private lateinit var pbDownload: ProgressBar
+    private lateinit var btnDownloadPauseResume: Button
+    private lateinit var btnDownloadCancel: Button
     private lateinit var llPluginList: LinearLayout
     private lateinit var tvPluginTotal: TextView
     private lateinit var tvNoPlugin: TextView
@@ -119,6 +126,12 @@ class AiOptionsActivity : BaseActivity() {
         btnImportPlugin = findViewById(R.id.btnImportPlugin)
         btnAutoScan = findViewById(R.id.btnAutoScan)
         llScanResult = findViewById(R.id.llScanResult)
+        btnDownloadModel = findViewById(R.id.btnDownloadModel)
+        llDownloadPanel = findViewById(R.id.llDownloadPanel)
+        tvDownloadStatus = findViewById(R.id.tvDownloadStatus)
+        pbDownload = findViewById(R.id.pbDownload)
+        btnDownloadPauseResume = findViewById(R.id.btnDownloadPauseResume)
+        btnDownloadCancel = findViewById(R.id.btnDownloadCancel)
         llPluginList = findViewById(R.id.llPluginList)
         tvPluginTotal = findViewById(R.id.tvPluginTotal)
         tvNoPlugin = findViewById(R.id.tvNoPlugin)
@@ -159,6 +172,9 @@ class AiOptionsActivity : BaseActivity() {
             importZipLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
         }
         btnInstallLocalModel.setOnClickListener { loadOrReloadLocalModel() }
+        btnDownloadModel.setOnClickListener { showModelPicker() }
+        btnDownloadPauseResume.setOnClickListener { toggleDownloadPause() }
+        btnDownloadCancel.setOnClickListener { ModelDownloader.cancel() }
         btnAutoScan.setOnClickListener {
             if (installing && !btnInstallLocalModel.isEnabled && scanning) {
                 // 扫描进行中：此按钮变为「取消搜寻」
@@ -193,6 +209,19 @@ class AiOptionsActivity : BaseActivity() {
         super.onResume()
         refreshLocalStatus()
         rebuildPluginList()
+        ModelDownloader.setListener(downloadListener)
+        // 恢复现场：若正在下载/已暂停，展示进度面板
+        val st = ModelDownloader.currentState()
+        if (st != ModelDownloader.State.IDLE && st != ModelDownloader.State.CANCELLED) {
+            llDownloadPanel.visibility = View.VISIBLE
+            btnDownloadModel.isEnabled = false
+            updateDownloadUi(ModelDownloader.Progress(st, ModelDownloader.downloadedBytes(), ModelDownloader.totalSize(), 0L))
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        ModelDownloader.setListener(null)
     }
 
     // ==================== 模型来源 / 本地状态 ====================
@@ -355,6 +384,162 @@ class AiOptionsActivity : BaseActivity() {
                 refreshLocalStatus()
                 rebuildPluginList()
             }
+        }
+    }
+
+    // ==================== 模型下载 ====================
+
+    /** 弹出模型选择对话框（可扩展多模型） */
+    private fun showModelPicker() {
+        val models = ModelCatalog.all()
+        if (models.isEmpty()) {
+            Toast.makeText(this, getString(R.string.ai_plugin_none), Toast.LENGTH_SHORT).show()
+            return
+        }
+        val labels = models.map { it.name + " · " + ModelCatalog.humanSize(it.sizeBytes) }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle(R.string.ai_download_title)
+            .setItems(labels) { _, which -> confirmDownload(models[which]) }
+            .setNegativeButton(R.string.ai_plugin_cancel, null)
+            .show()
+    }
+
+    /** 二次确认后开始下载 */
+    private fun confirmDownload(model: ModelEntry) {
+        AlertDialog.Builder(this)
+            .setTitle(model.name)
+            .setMessage(model.description + "\n\n" + ModelCatalog.humanSize(model.sizeBytes) + "\n\n" +
+                "SHA-256: " + model.sha256.take(16) + "…")
+            .setPositiveButton(R.string.ai_download_start) { _, _ ->
+                ModelDownloader.start(applicationContext, model)
+                showDownloadPanel()
+            }
+            .setNegativeButton(R.string.ai_plugin_cancel, null)
+            .show()
+    }
+
+    /** 安装刚下载完成的插件文件（复用 installFromZipFile） */
+    private fun installDownloadedFile(file: File) {
+        if (installing) return
+        installing = true
+        btnDownloadModel.isEnabled = false
+        btnAutoScan.isEnabled = false
+        btnImportPlugin.isEnabled = false
+        btnInstallLocalModel.isEnabled = false
+        pbLocalModel.visibility = View.VISIBLE
+        pbLocalModel.isIndeterminate = false
+        pbLocalModel.progress = 0
+
+        val ctx = applicationContext
+        CoroutineScope(Dispatchers.IO).launch {
+            withContext(Dispatchers.Main) {
+                tvLocalModelStatus.text = getString(R.string.ai_plugin_extracting, file.name)
+            }
+            val plugin = PluginManager.installFromZipFile(ctx, file) { name, done, total ->
+                runOnUiThread {
+                    tvLocalModelStatus.text = getString(R.string.ai_plugin_extracting, name)
+                    if (total > 0) pbLocalModel.progress = (done * 100 / total).toInt().coerceIn(0, 100)
+                }
+            }
+            if (plugin != null) {
+                PluginManager.setCurrent(ctx, plugin.id)
+                LocalLlmManager.unload()
+            }
+            withContext(Dispatchers.Main) {
+                pbLocalModel.visibility = View.GONE
+                pbLocalModel.progress = 0
+                installing = false
+                btnDownloadModel.isEnabled = true
+                btnAutoScan.isEnabled = true
+                btnImportPlugin.isEnabled = true
+                btnInstallLocalModel.isEnabled = true
+                llDownloadPanel.visibility = View.GONE
+                if (plugin != null) {
+                    Toast.makeText(this@AiOptionsActivity, getString(R.string.ai_plugin_imported, plugin.name), Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this@AiOptionsActivity, getString(R.string.ai_plugin_import_failed), Toast.LENGTH_LONG).show()
+                }
+                refreshLocalStatus()
+                rebuildPluginList()
+            }
+        }
+    }
+
+    private fun showDownloadPanel() {
+        llDownloadPanel.visibility = View.VISIBLE
+        btnDownloadModel.isEnabled = false
+        updateDownloadUi(ModelDownloader.Progress(
+            ModelDownloader.State.PREPARING, ModelDownloader.downloadedBytes(),
+            ModelDownloader.totalSize(), 0L
+        ))
+    }
+
+    private fun toggleDownloadPause() {
+        when (ModelDownloader.currentState()) {
+            ModelDownloader.State.DOWNLOADING, ModelDownloader.State.PREPARING ->
+                ModelDownloader.pause()
+            ModelDownloader.State.PAUSED ->
+                ModelDownloader.resume()
+            else -> {}
+        }
+    }
+
+    /** 下载进度回调（主线程） */
+    private val downloadListener = object : ModelDownloader.Listener {
+        override fun onProgress(p: ModelDownloader.Progress) {
+            updateDownloadUi(p)
+        }
+
+        override fun onFinished(file: File?) {
+            btnDownloadModel.isEnabled = true
+            if (file != null) {
+                tvDownloadStatus.text = getString(R.string.ai_download_done)
+                // 下载成功 → 直接安装（文件在 App 私有目录，不在自动搜寻范围内）
+                installDownloadedFile(file)
+            }
+        }
+    }
+
+    private fun updateDownloadUi(p: ModelDownloader.Progress) {
+        when (p.state) {
+            ModelDownloader.State.PREPARING ->
+                tvDownloadStatus.text = getString(R.string.ai_download_preparing)
+            ModelDownloader.State.VERIFYING ->
+                tvDownloadStatus.text = getString(R.string.ai_download_verifying)
+            ModelDownloader.State.DONE ->
+                tvDownloadStatus.text = getString(R.string.ai_download_done)
+            ModelDownloader.State.PAUSED -> {
+                tvDownloadStatus.text = getString(R.string.ai_download_paused)
+                btnDownloadPauseResume.text = getString(R.string.ai_download_resume)
+            }
+            ModelDownloader.State.ERROR ->
+                tvDownloadStatus.text = getString(R.string.ai_download_failed, p.message ?: "")
+            ModelDownloader.State.CANCELLED -> {
+                tvDownloadStatus.text = getString(R.string.ai_download_cancelled)
+                llDownloadPanel.visibility = View.GONE
+                btnDownloadModel.isEnabled = true
+            }
+            ModelDownloader.State.DOWNLOADING -> {
+                val pct = if (p.total > 0) (p.downloaded * 100 / p.total).toInt() else 0
+                pbDownload.progress = pct
+                val remain = if (p.speedBps > 0) {
+                    val secs = (p.total - p.downloaded) / p.speedBps
+                    String.format("%d:%02d", secs / 60, secs % 60)
+                } else getString(R.string.ai_download_remain_unknown)
+                tvDownloadStatus.text = getString(
+                    R.string.ai_downloading, pct,
+                    ModelCatalog.humanSize(p.speedBps), remain
+                )
+                btnDownloadPauseResume.text = getString(R.string.ai_download_pause)
+            }
+            ModelDownloader.State.IDLE -> {}
+        }
+        if (p.state != ModelDownloader.State.CANCELLED) {
+            btnDownloadPauseResume.isEnabled =
+                p.state == ModelDownloader.State.DOWNLOADING ||
+                p.state == ModelDownloader.State.PAUSED ||
+                p.state == ModelDownloader.State.PREPARING
+            btnDownloadCancel.isEnabled = btnDownloadPauseResume.isEnabled
         }
     }
 
