@@ -12,20 +12,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [未发布 / Unreleased]
 
+### 计划中 / Planned
+- 🤖 更多本地模型插件（不同尺寸 / 量化级别）
+- 📥 应用内直接下载模型插件（免手动导入）
+
+---
+
+## [v1.2.1] - 2026-10-07
+
+> 保活设置修复 · 本地模型体验优化
+
+### 修复 / Fixed
+- **🛡️ 修复保活设置无法保存（重要）**：优化设置弹窗的底部按钮此前被 `ScrollView` 遮挡导致不可见，用户无法保存保活配置。现已改为**开关即时生效**，移除底部按钮，无需再点保存。
+- **🛡️ 修复保活开关状态矛盾**：通知权限被拒时会把「前台服务保活」开关自动回滚为关闭，避免「开关为 ON 但服务未运行」。
+
 ### 新增 / Added
 - **🔍 自动搜寻可取消**：扫描期间按钮变为「取消搜寻」，点击可随时中断。
 - **🧠 本地模型专属提示词**：本地小模型改用更短、更直接的提示词，提升解析稳定性。
 
-### 修复 / Fixed
-- **🛡️ 修复保活设置无法保存**：优化设置弹窗的底部按钮此前被 `ScrollView` 遮挡导致不可见。现已改为**开关即时生效**，移除底部按钮，无需再点保存。
-- **🛡️ 修复保活开关状态矛盾**：通知权限被拒时会把「前台服务保活」开关自动回滚为关闭，避免「开关为 ON 但服务未运行」。
+### 构建 / Build
+- 支持从 `local.properties` 读取 Release 签名配置（CI 无此文件时自动跳过，不影响云端构建）。
 
 ### 文档 / Docs
 - README 补充本地小模型功能说明（中英双语）。
-
-### 计划中 / Planned
-- 🤖 更多本地模型插件（不同尺寸 / 量化级别）
-- 📥 应用内直接下载模型插件（免手动导入）
 
 ---
 
@@ -172,7 +181,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
-[未发布 / Unreleased]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.2.0...HEAD
+[未发布 / Unreleased]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.2.1...HEAD
+[v1.2.1]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.2.0...v1.2.1
 [v1.2.0]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.1.3...v1.2.0
 [v1.1.3]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.1.2...v1.1.3
 [v1.1.2]: https://github.com/SWSP-Git/messageAIHelper/compare/v1.1.1...v1.1.2

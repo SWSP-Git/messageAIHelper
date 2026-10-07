@@ -3,7 +3,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Android-green.svg)](https://developer.android.com)
 [![Language](https://img.shields.io/badge/Language-Kotlin-blue.svg)](https://kotlinlang.org)
 [![License](https://img.shields.io/badge/License-GPL--3.0-orange.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.2.0-brightgreen.svg)](https://github.com/SWSP-Git/messageAIHelper/releases)
+[![Version](https://img.shields.io/badge/Version-1.2.1-brightgreen.svg)](https://github.com/SWSP-Git/messageAIHelper/releases)
 [![Android CI](https://github.com/SWSP-Git/messageAIHelper/actions/workflows/android-ci.yml/badge.svg)](https://github.com/SWSP-Git/messageAIHelper/actions/workflows/android-ci.yml)
 
 > 🔔 捕获通知 · 🤖 AI 智能解析 · 📅 静默写日历 · 📝 智能归档备忘录 · 🧠 本地小模型 · 🌐 中英双语
