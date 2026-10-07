@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [未发布 / Unreleased]
 
+### 优化 / Changed
+- **🗂️ 备忘卡片折叠态限 2 行**：摘要与智能建议在折叠态最多显示 2 行（超出省略），展开后显示完整内容，避免长文本撑高卡片。
+
 ### 计划中 / Planned
 - 🤖 更多本地模型插件（不同尺寸 / 量化级别）
 - 📥 应用内直接下载模型插件（免手动导入）

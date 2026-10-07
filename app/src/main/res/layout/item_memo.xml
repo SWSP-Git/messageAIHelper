@@ -72,7 +72,7 @@
             android:textStyle="bold"
             android:visibility="gone" />
 
-        <!-- ===== 智能建议（折叠态可见，蓝字） ===== -->
+        <!-- ===== 智能建议（折叠态可见，蓝字，最多 2 行） ===== -->
         <TextView
             android:id="@+id/tvSuggestion"
             android:layout_width="match_parent"
@@ -80,16 +80,20 @@
             android:layout_marginTop="8dp"
             android:textColor="#1976D2"
             android:textSize="14sp"
+            android:maxLines="2"
+            android:ellipsize="end"
             android:visibility="gone" />
 
-        <!-- ===== 摘要（折叠态可见） ===== -->
+        <!-- ===== 摘要（折叠态可见，最多 2 行） ===== -->
         <TextView
             android:id="@+id/tvSummary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:textColor="#212121"
-            android:textSize="15sp" />
+            android:textSize="15sp"
+            android:maxLines="2"
+            android:ellipsize="end" />
 
         <!-- ===== 折叠/展开提示 ===== -->
         <TextView

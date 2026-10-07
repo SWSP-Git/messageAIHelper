@@ -117,6 +117,10 @@ class MemoAdapter(
         // ===== 详情区（展开时显示）：来源 / 分类 / 原文 =====
         val isExpanded = expanded.contains(raw)
         holder.llDetail.visibility = if (isExpanded) View.VISIBLE else View.GONE
+        // 折叠态限 2 行；展开态取消限制，显示完整内容
+        val foldMax = if (isExpanded) Int.MAX_VALUE else 2
+        holder.tvSummary.maxLines = foldMax
+        holder.tvSuggestion.maxLines = foldMax
         holder.tvExpandHint.text = ctx.getString(
             if (isExpanded) R.string.memo_collapse_hint else R.string.memo_expand_hint
         )
