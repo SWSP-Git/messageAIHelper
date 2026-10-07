@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit
  * 请求分段下载同一文件，可显著提速（国内常见从数百 KB/s 提升到数 MB/s）。
  *
  * 特性：
- * - 12 线程并发分段（[CONCURRENCY]）
+ * - 可配置并发分段（默认 12，最大 64，见 [MIN_THREADS] / [MAX_THREADS]）
  * - 断点续传（保留 .part 文件与各段已下载偏移）
  * - 暂停 / 恢复 / 取消
  * - 完成后 SHA-256 完整性校验
@@ -53,7 +53,12 @@ object ModelDownloader {
         fun onFinished(file: File?)
     }
 
-    const val CONCURRENCY = 12
+    /** 默认并发数 */
+    const val DEFAULT_CONCURRENCY = 12
+    /** 并发数下限 */
+    const val MIN_THREADS = 1
+    /** 并发数上限 */
+    const val MAX_THREADS = 64
     private const val BUFFER = 256 * 1024
     private const val MAX_RETRY = 3
 
@@ -63,8 +68,8 @@ object ModelDownloader {
 
     private var entry: ModelEntry? = null
     private var totalBytes = 0L
-    private var segments = CONCURRENCY
-    private var segmentDone = LongArray(CONCURRENCY)
+    private var segments = DEFAULT_CONCURRENCY
+    private var segmentDone = LongArray(DEFAULT_CONCURRENCY)
     private var job: Job? = null
 
     @Volatile private var listener: Listener? = null
@@ -78,8 +83,8 @@ object ModelDownloader {
         .writeTimeout(60, TimeUnit.SECONDS)
         .retryOnConnectionFailure(true)
         .dispatcher(Dispatcher().apply {
-            maxRequests = CONCURRENCY + 4
-            maxRequestsPerHost = CONCURRENCY + 4
+            maxRequests = MAX_THREADS + 4
+            maxRequestsPerHost = MAX_THREADS + 4
         })
         .build()
 
@@ -115,13 +120,21 @@ object ModelDownloader {
 
     // ==================== 控制 ====================
 
-    fun start(context: Context, model: ModelEntry) {
+    /** 当前配置的并发数 */
+    fun threadCount(): Int = segments
+
+    /**
+     * 开始下载。
+     * @param threads 并发线程数（会被限制在 [MIN_THREADS]..[MAX_THREADS]）
+     */
+    fun start(context: Context, model: ModelEntry, threads: Int = DEFAULT_CONCURRENCY) {
         if (isDownloading()) return
         appContext = context.applicationContext
         entry = model
         cancelled = false
         totalBytes = model.sizeBytes
-        if (segmentDone.size != segments) segmentDone = LongArray(segments)
+        segments = threads.coerceIn(MIN_THREADS, MAX_THREADS)
+        segmentDone = LongArray(segments)
 
         startForegroundService()
         job?.cancel()

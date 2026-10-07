@@ -135,6 +135,8 @@
     <string name="ai_download_remain_unknown">--</string>
     <string name="ai_download_installing_hint">The downloaded plugin was detected; tap to install</string>
     <string name="ai_download_background">Background</string>
+    <string name="ai_download_threads_label">Download threads (%1$d-%2$d; more is faster but uses more data/RAM)</string>
+    <string name="ai_download_threads_clamped">Threads limited to %1$d-%2$d</string>
     <string name="download_channel_name">Model Download</string>
     <string name="download_channel_desc">Shows download progress to avoid background interruption</string>
     <string name="download_notif_title">Downloading model</string>

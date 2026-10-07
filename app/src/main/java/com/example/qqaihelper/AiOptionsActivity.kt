@@ -56,6 +56,7 @@ class AiOptionsActivity : BaseActivity() {
         const val MAX_DAYS = 30
         const val DEFAULT_DAYS = 7
         const val DEFAULT_PORT = LocalLlmManager.DEFAULT_PORT
+        const val KEY_DOWNLOAD_THREADS = "download_threads"
     }
 
     private lateinit var prefs: android.content.SharedPreferences
@@ -408,14 +409,50 @@ class AiOptionsActivity : BaseActivity() {
             .show()
     }
 
-    /** 二次确认后开始下载 */
+    /** 二次确认 + 选择线程数后开始下载 */
     private fun confirmDownload(model: ModelEntry) {
-        AlertDialog.Builder(this)
+        val ctx = this
+        val container = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(48, 32, 48, 16)
+        }
+        val info = TextView(ctx).apply {
+            text = model.description + "\n\n" + ModelCatalog.humanSize(model.sizeBytes) +
+                "\nSHA-256: " + model.sha256.take(16) + "…"
+            textSize = 13f
+            setTextColor(0xFF424242.toInt())
+        }
+        container.addView(info)
+
+        val threadLabel = TextView(ctx).apply {
+            text = getString(R.string.ai_download_threads_label, ModelDownloader.MIN_THREADS, ModelDownloader.MAX_THREADS)
+            textSize = 13f
+            setTextColor(0xFF212121.toInt())
+            setPadding(0, 28, 0, 0)
+        }
+        container.addView(threadLabel)
+
+        val etThreads = EditText(ctx).apply {
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            setText(prefs.getInt(KEY_DOWNLOAD_THREADS, ModelDownloader.DEFAULT_CONCURRENCY).toString())
+            textSize = 15f
+            setPadding(24, 20, 24, 20)
+        }
+        container.addView(etThreads)
+
+        AlertDialog.Builder(ctx)
             .setTitle(model.name)
-            .setMessage(model.description + "\n\n" + ModelCatalog.humanSize(model.sizeBytes) + "\n\n" +
-                "SHA-256: " + model.sha256.take(16) + "…")
+            .setView(container)
             .setPositiveButton(R.string.ai_download_start) { _, _ ->
-                ModelDownloader.start(applicationContext, model)
+                val n = etThreads.text.toString().trim().toIntOrNull()
+                    ?: ModelDownloader.DEFAULT_CONCURRENCY
+                val threads = n.coerceIn(ModelDownloader.MIN_THREADS, ModelDownloader.MAX_THREADS)
+                if (threads != n) {
+                    Toast.makeText(ctx, getString(R.string.ai_download_threads_clamped,
+                        ModelDownloader.MIN_THREADS, ModelDownloader.MAX_THREADS), Toast.LENGTH_SHORT).show()
+                }
+                prefs.edit().putInt(KEY_DOWNLOAD_THREADS, threads).apply()
+                ModelDownloader.start(applicationContext, model, threads)
                 showDownloadPanel()
             }
             .setNegativeButton(R.string.ai_plugin_cancel, null)
