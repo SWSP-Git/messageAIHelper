@@ -123,6 +123,32 @@ object ModelDownloader {
         return if (f.exists() && f.length() > 0) f else null
     }
 
+    // ==================== 断点进度持久化 ====================
+
+    private fun progressFile(context: Context, model: ModelEntry): File =
+        File(targetFile(context, model).absolutePath + ".progress")
+
+    /** 读取已保存的分段进度；线程数或文件不符时返回全 0 */
+    private fun loadProgress(context: Context, model: ModelEntry, threads: Int): LongArray {
+        val arr = LongArray(threads)
+        return try {
+            val f = progressFile(context, model)
+            if (!f.exists()) return arr
+            val parts = f.readText().trim().split(",")
+            if (parts.size != threads) return arr
+            for (i in 0 until threads) arr[i] = parts[i].toLongOrNull() ?: 0L
+            arr
+        } catch (t: Throwable) { arr }
+    }
+
+    /** 保存分段进度（节流调用） */
+    private fun saveProgress(context: Context, model: ModelEntry) {
+        try {
+            val text = segmentDone.joinToString(",")
+            progressFile(context, model).writeText(text)
+        } catch (t: Throwable) { /* 忽略 */ }
+    }
+
     // ==================== 控制 ====================
 
     /** 当前配置的并发数 */
@@ -139,7 +165,9 @@ object ModelDownloader {
         cancelled = false
         totalBytes = model.sizeBytes
         segments = threads.coerceIn(MIN_THREADS, MAX_THREADS)
-        segmentDone = LongArray(segments)
+        // 恢复断点：读取上次保存的各段进度（线程数不同则无法对应，重置）
+        segmentDone = loadProgress(context, model, segments)
+        AppLogger.d("下载启动: " + segments + " 线程，已恢复 " + segmentDone.sum() + " 字节")
 
         startForegroundService()
         job?.cancel()
@@ -175,9 +203,8 @@ object ModelDownloader {
         val ctx = appContext
         val model = entry
         if (ctx != null && model != null) {
-            runCatching {
-                File(targetFile(ctx, model).absolutePath + ".part").delete()
-            }
+            runCatching { File(targetFile(ctx, model).absolutePath + ".part").delete() }
+            runCatching { progressFile(ctx, model).delete() }
         }
         segmentDone = LongArray(segments)
         stopForegroundService()
@@ -232,22 +259,29 @@ object ModelDownloader {
                 if (totalBytes > 0L) {
                     RandomAccessFile(part, "rw").use { it.setLength(totalBytes) }
                 }
+                AppLogger.d("下载: 已预分配文件 " + totalBytes + " 字节")
             }
 
             state = State.DOWNLOADING
             val ok = downloadAll(model, part)
             if (cancelled) { state = State.PAUSED; notifyProgress(); return }
-            if (!ok) { fail("下载失败，请检查网络后重试"); return }
+            if (!ok) {
+                AppLogger.e("下载失败: 部分分段未完成（已完成 " + segmentDone.sum() + "/" + totalBytes + " 字节）")
+                fail("下载失败，请检查网络后重试")
+                return
+            }
 
             // 校验
             state = State.VERIFYING
             notifyProgress()
             if (!verifySha256(part, model.sha256)) {
+                AppLogger.e("校验失败: SHA-256 不匹配，文件已删除")
                 part.delete()
                 segmentDone = LongArray(segments)
                 fail("校验失败：文件可能损坏，已删除，请重试")
                 return
             }
+            AppLogger.d("下载完成并通过 SHA-256 校验")
 
             // 落盘：.part -> 正式文件
             if (dest.exists()) dest.delete()
@@ -255,6 +289,8 @@ object ModelDownloader {
                 part.copyTo(dest, overwrite = true)
                 part.delete()
             }
+            // 清理断点进度文件
+            runCatching { progressFile(ctx, model).delete() }
             state = State.DONE
             notifyProgress()
             stopForegroundService()
@@ -267,22 +303,33 @@ object ModelDownloader {
 
     private suspend fun downloadAll(model: ModelEntry, part: File): Boolean {
         if (totalBytes <= 0L) {
-            // 无法确定大小 → 单线程回退
+            AppLogger.d("下载: 未知文件大小，回退单线程")
             return downloadSingle(model, part)
         }
         val segSize = totalBytes / segments
-        if (segSize <= 0L) return downloadSingle(model, part)
+        if (segSize <= 0L) {
+            AppLogger.d("下载: 分段过小，回退单线程")
+            return downloadSingle(model, part)
+        }
+        // 先探测服务器是否支持分段（Range）；不支持则回退单线程
+        if (!probeRangeSupport(model.url)) {
+            AppLogger.d("下载: 服务器不支持分段（未返回 206），回退单线程")
+            return downloadSingle(model, part)
+        }
+        AppLogger.d("下载开始: $segments 线程，总大小 $totalBytes 字节")
 
         val startTime = System.currentTimeMillis()
         val baseline = segmentDone.sum()
 
-        // 进度循环
+        // 进度循环（同时定期持久化断点）
+        val ctx = appContext
         val progressJob = scope.launch {
             while (isActive) {
                 val done = segmentDone.sum()
                 val elapsed = (System.currentTimeMillis() - startTime).coerceAtLeast(1L)
                 val speed = (done - baseline) * 1000 / elapsed
                 notifyProgress(done, speed)
+                if (ctx != null) saveProgress(ctx, model)
                 delay(500)
             }
         }
@@ -315,8 +362,14 @@ object ModelDownloader {
                     .header("User-Agent", "messageAIHelper")
                     .build()
                 client.newCall(req).execute().use { resp ->
-                    if (!resp.isSuccessful) { attempt++; return@use }
-                    val body = resp.body ?: run { attempt++; return@use }
+                    // 分段下载必须要求 206（Partial Content）；
+                    // 若返回 200，说明服务器忽略了 Range，会把整文件写入本段位置导致数据错乱。
+                    if (resp.code != 206) {
+                        AppLogger.e("段 " + index + " 期望 206，实到 " + resp.code)
+                        attempt++
+                        return@use
+                    }
+                    val body = resp.body ?: run { AppLogger.e("段 " + index + " 响应体为空"); attempt++; return@use }
                     val input = body.byteStream()
                     RandomAccessFile(part, "rw").use { raf ->
                         raf.seek(from)
@@ -337,7 +390,8 @@ object ModelDownloader {
                 attempt++
             } catch (t: Throwable) {
                 attempt++
-                delay(1000L * attempt)
+                AppLogger.e("段 " + index + " 第 " + attempt + " 次失败: " + t.javaClass.simpleName + ": " + t.message)
+                if (attempt < MAX_RETRY) delay(1000L * attempt)
             }
         }
         return start + segmentDone[index] > end
@@ -373,6 +427,22 @@ object ModelDownloader {
             }
             true
         } catch (t: Throwable) {
+            AppLogger.e("单线程下载失败: " + t.javaClass.simpleName + ": " + t.message)
+            false
+        }
+    }
+
+    /** 探测服务器是否支持分段下载（Range 返回 206） */
+    private fun probeRangeSupport(url: String): Boolean {
+        return try {
+            val req = Request.Builder().url(url)
+                .header("Range", "bytes=0-0")
+                .header("Accept-Encoding", "identity")
+                .header("User-Agent", "messageAIHelper")
+                .build()
+            client.newCall(req).execute().use { resp -> resp.code == 206 }
+        } catch (t: Throwable) {
+            AppLogger.e("探测分段支持失败: ${t.message}")
             false
         }
     }
