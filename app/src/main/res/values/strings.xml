@@ -134,6 +134,7 @@
     <string name="ai_download_cancelled">已取消下载</string>
     <string name="ai_download_remain_unknown">--</string>
     <string name="ai_download_installing_hint">已自动识别刚下载的插件，请点击安装</string>
+    <string name="ai_download_background">后台下载</string>
     <string name="download_channel_name">模型下载</string>
     <string name="download_channel_desc">下载本地模型时显示进度，避免后台被中断</string>
     <string name="download_notif_title">正在下载模型</string>

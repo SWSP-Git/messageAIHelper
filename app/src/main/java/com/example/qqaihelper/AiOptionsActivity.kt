@@ -83,6 +83,7 @@ class AiOptionsActivity : BaseActivity() {
     private lateinit var pbDownload: ProgressBar
     private lateinit var btnDownloadPauseResume: Button
     private lateinit var btnDownloadCancel: Button
+    private lateinit var btnDownloadBackground: TextView
     private lateinit var llPluginList: LinearLayout
     private lateinit var tvPluginTotal: TextView
     private lateinit var tvNoPlugin: TextView
@@ -132,6 +133,7 @@ class AiOptionsActivity : BaseActivity() {
         pbDownload = findViewById(R.id.pbDownload)
         btnDownloadPauseResume = findViewById(R.id.btnDownloadPauseResume)
         btnDownloadCancel = findViewById(R.id.btnDownloadCancel)
+        btnDownloadBackground = findViewById(R.id.btnDownloadBackground)
         llPluginList = findViewById(R.id.llPluginList)
         tvPluginTotal = findViewById(R.id.tvPluginTotal)
         tvNoPlugin = findViewById(R.id.tvNoPlugin)
@@ -175,6 +177,8 @@ class AiOptionsActivity : BaseActivity() {
         btnDownloadModel.setOnClickListener { showModelPicker() }
         btnDownloadPauseResume.setOnClickListener { toggleDownloadPause() }
         btnDownloadCancel.setOnClickListener { ModelDownloader.cancel() }
+        // 后台下载：把 App 切到后台，下载由前台服务继续（通知栏显示进度）
+        btnDownloadBackground.setOnClickListener { moveTaskToBack(true) }
         btnAutoScan.setOnClickListener {
             if (installing && !btnInstallLocalModel.isEnabled && scanning) {
                 // 扫描进行中：此按钮变为「取消搜寻」
