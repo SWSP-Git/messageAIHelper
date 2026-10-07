@@ -121,7 +121,9 @@
     <string name="ai_scan_cancelled">Scan cancelled</string>
     <string name="ai_download_button">⬇️ Download Model</string>
     <string name="ai_download_title">Choose a model to download</string>
-    <string name="ai_download_start">Start</string>
+    <string name="ai_model_guide_btn">❓ How to choose?</string>
+    <string name="ai_model_guide_title">Model Selection Guide</string>
+    <string name="ai_model_guide_msg">[Rule of thumb]\nBigger model = more accurate, but slower and more RAM-hungry. Balance by your device and needs.\n\n[By device RAM]\n· 4GB / low-end: pick 0.5B–0.6B (light)\n· 6–8GB: pick 1.5B (balanced, recommended)\n· 12GB+: try 3B (high quality)\n\n[Model traits]\n· Qwen2.5 0.5B: lightest, fast, moderate accuracy\n· MiniCPM4 0.5B: light, Chinese-friendly\n· Qwen3 0.6B: new arch, balances size and quality\n· Qwen2.5 1.5B: balanced, daily driver\n· DeepSeek-R1 1.5B: with reasoning chain, for complex messages\n· Qwen2.5 3B: highest quality, needs more RAM\n\n[First-time tip]\nStart with 1.5B; switch to 0.5B if slow; upgrade to 3B if not accurate enough.\n\n[Note]\nAfter switching, tap \"🔄 Load / Reload\" to take effect; only one model can be loaded at a time.</string>\n    <string name="ai_download_start">Start</string>
     <string name="ai_download_pause">⏸ Pause</string>
     <string name="ai_download_resume">▶ Resume</string>
     <string name="ai_download_cancel">✕ Cancel</string>

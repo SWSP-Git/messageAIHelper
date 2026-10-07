@@ -4,9 +4,12 @@ package com.example.qqaihelper
  * 可下载模型清单（数据源）。
  *
  * 设计目标：**可扩展**。
- * - 当前为内置（硬编码）清单，仅一个模型；
+ * - 当前为内置（硬编码）清单；
  * - 未来可换成远程 manifest（如从 GitHub Raw 拉取 JSON），
  *   只需替换 [all] 的实现，调用方无需改动。
+ *
+ * ⚠️ 所有模型均托管于 **ModelScope 国内 CDN**，URL 形如：
+ *   https://modelscope.cn/models/{namespace}/{repo}/resolve/master/{file}.zip
  *
  * @property id          唯一标识（用于去重 / 记录）
  * @property name        展示名称
@@ -27,10 +30,7 @@ data class ModelEntry(
 object ModelCatalog {
 
     /**
-     * 返回全部可下载模型。
-     *
-     * 未来若改为远程清单，可在此处发起网络请求（挂起函数）并解析 JSON；
-     * 为保持签名稳定，调用方应通过 [all] 获取列表。
+     * 返回全部可下载模型（按体积从小到大排序，便于用户按需选择）。
      */
     fun all(): List<ModelEntry> = builtin
 
@@ -43,15 +43,60 @@ object ModelCatalog {
         return if (mb >= 1024) String.format("%.2f GB", mb / 1024.0) else String.format("%.1f MB", mb)
     }
 
-    // ---- 内置清单 ----
+    // ---- 内置清单（ModelScope 国内源） ----
+    private const val NS = "mfxq2l"
+
+    private fun msUrl(repo: String, file: String) =
+        "https://modelscope.cn/models/" + NS + "/" + repo + "/resolve/master/" + file
+
     private val builtin = listOf(
         ModelEntry(
+            id = "qwen2.5-0.5b-mnn",
+            name = "Qwen2.5 0.5B（轻量·推荐）",
+            description = "体积小、速度快，解析准确度尚可，适合低配手机或追求响应速度的场景。",
+            url = msUrl("qwen2.5-0.5B-mnn", "qwen2.5-0.5b-mnn.zip"),
+            sizeBytes = 284_537_739L,
+            sha256 = "3723fcfc3cd5379e494d7836e1d38efde472a484857eb1377070de6a4baedad4",
+        ),
+        ModelEntry(
+            id = "minicpm4-0.5b-mnn",
+            name = "MiniCPM4 0.5B",
+            description = "MiniCPM4-0.5B 的 MNN 模型，轻量快速，适合低配手机。",
+            url = msUrl("minicpm4-0.5B-mnn", "minicpm4-0.5b-mnn.zip"),
+            sizeBytes = 311_060_083L,
+            sha256 = "ae31835ab8bc9609a58eaf101a9b0cb00499f9e360a889e3092b1c2a679df1cc",
+        ),
+        ModelEntry(
+            id = "qwen3-0.6b-mnn",
+            name = "Qwen3 0.6B",
+            description = "Qwen3-0.6B 的 4bit 量化 MNN 模型，新一代架构，体积小、速度快。",
+            url = msUrl("qwen3-0.6B-mnn", "qwen3-0.6b-mnn.zip"),
+            sizeBytes = 454_471_687L,
+            sha256 = "eb1b327f37fd1d8fa69f54bc06171af9cd930e37ed8f853ae5b58c73294fcb0f",
+        ),
+        ModelEntry(
             id = "qwen2.5-1.5b-mnn",
-            name = "Qwen2.5 1.5B Instruct (MNN 4bit)",
-            description = "通用中文小模型，约 839 MB，适合离线消息解析（国内源，速度快）",
-            url = "https://modelscope.cn/models/mfxq2l/qwen2.5-1.5B-mnn/resolve/master/qwen2.5-1.5b-mnn.zip",
+            name = "Qwen2.5 1.5B（均衡·推荐）",
+            description = "通用中文小模型，解析准确度与体积较均衡，适合大多数场景。",
+            url = msUrl("qwen2.5-1.5B-mnn", "qwen2.5-1.5b-mnn.zip"),
             sizeBytes = 879_616_644L,
             sha256 = "0a1d3074acf5b6437d046b5f03cd57aeac6cad4cb16f09a0068a57ab62a2960a",
+        ),
+        ModelEntry(
+            id = "deepseek-r1-1.5b-mnn",
+            name = "DeepSeek-R1 1.5B",
+            description = "DeepSeek-R1-Distill-Qwen-1.5B 的 MNN 模型，具备推理链能力。",
+            url = msUrl("deepseek-r1-1.5B-mnn", "deepseek-r1-1.5b-mnn.zip"),
+            sizeBytes = 874_782_778L,
+            sha256 = "88bb5fdb23977293ef116337c8eb3c05cc9698a9194d4a829a95f046406c48e9",
+        ),
+        ModelEntry(
+            id = "qwen2.5-3b-mnn",
+            name = "Qwen2.5 3B（高质量）",
+            description = "Qwen2.5-3B-Instruct 的 MNN 模型，能力更强，适合对解析质量要求高的场景（需较大内存）。",
+            url = msUrl("qwen2.5-3B-mnn", "qwen2.5-3b-mnn.zip"),
+            sizeBytes = 1_747_152_618L,
+            sha256 = "3f821322ec5531f8d632bbf737f1deada53b3fd97bc82122cbbc86ba38df6447",
         ),
     )
 }

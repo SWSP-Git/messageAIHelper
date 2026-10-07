@@ -121,7 +121,9 @@
     <string name="ai_scan_cancelled">已取消搜寻</string>
     <string name="ai_download_button">⬇️ 下载模型</string>
     <string name="ai_download_title">选择要下载的模型</string>
-    <string name="ai_download_start">开始下载</string>
+    <string name="ai_model_guide_btn">❓ 如何选择？</string>
+    <string name="ai_model_guide_title">模型选择指南</string>
+    <string name="ai_model_guide_msg">【总原则】\n模型越大 → 解析越准，但越慢、越占内存。请按手机配置与需求权衡。\n\n【按手机配置】\n· 4GB 内存 / 低配：选 0.5B–0.6B（轻量）\n· 6–8GB 内存：选 1.5B（均衡，推荐）\n· 12GB+ 内存：可尝试 3B（高质量）\n\n【各模型特点】\n· Qwen2.5 0.5B：最轻量，速度快，准确度一般\n· MiniCPM4 0.5B：轻量，中文友好\n· Qwen3 0.6B：新架构，轻量与质量兼顾\n· Qwen2.5 1.5B：均衡之选，日常推荐\n· DeepSeek-R1 1.5B：带推理链，适合复杂消息\n· Qwen2.5 3B：解析质量最高，需较大内存\n\n【首次使用建议】\n先装 1.5B 试用；若觉得慢或内存吃紧，改用 0.5B；若觉得不够准，升级到 3B。\n\n【提示】\n切换模型后需点「🔄 加载 / 重载」才生效；同一时刻只能加载一个模型。</string>\n    <string name="ai_download_start">开始下载</string>
     <string name="ai_download_pause">⏸ 暂停</string>
     <string name="ai_download_resume">▶ 继续</string>
     <string name="ai_download_cancel">✕ 取消</string>

@@ -394,7 +394,7 @@ class AiOptionsActivity : BaseActivity() {
 
     // ==================== 模型下载 ====================
 
-    /** 弹出模型选择对话框（可扩展多模型） */
+    /** 弹出模型选择对话框（可扩展多模型，含选择指南） */
     private fun showModelPicker() {
         val models = ModelCatalog.all()
         if (models.isEmpty()) {
@@ -405,7 +405,17 @@ class AiOptionsActivity : BaseActivity() {
         AlertDialog.Builder(this)
             .setTitle(R.string.ai_download_title)
             .setItems(labels) { _, which -> confirmDownload(models[which]) }
+            .setNeutralButton(R.string.ai_model_guide_btn) { _, _ -> showModelGuide() }
             .setNegativeButton(R.string.ai_plugin_cancel, null)
+            .show()
+    }
+
+    /** 弹出「模型选择指南」说明对话框 */
+    private fun showModelGuide() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.ai_model_guide_title)
+            .setMessage(R.string.ai_model_guide_msg)
+            .setPositiveButton(R.string.dialog_confirm, null)
             .show()
     }
 
