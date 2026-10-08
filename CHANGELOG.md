@@ -24,6 +24,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - `eos_token`（结束标记，默认 `<|im_end|>`）
   - 未提供时回退 Qwen2.5 ChatML 格式，保证旧插件完全兼容；不同对话格式的模型（如 DeepSeek 的 `<｜User｜>`）只需在插件中声明模板即可。
 
+### 修复 / Fixed
+- **🧠 修复思考型模型（DeepSeek-R1 / Qwen3）思维链溢出**：此前 `maxTokens` 默认仅 512，思维链会耗尽预算导致正式答案被截断；且输出未剥离思维链。现已（1）在 JNI 层新增 `stripThinking()` 剥离 ` thinking…` 内容；（2）`maxTokens` 默认 512 → **2048**、上限 4096 → **8192**。
+
 ### 计划中 / Planned
 - 🤖 更多本地模型插件（不同尺寸 / 量化级别）
 
