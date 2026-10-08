@@ -114,7 +114,22 @@ std::string buildPrompt(const EngineHandle* h, const std::string& system, const 
     return p;
 }
 
+// 去掉思维链（thinking / reasoning）：
+// 思考型模型（如 DeepSeek-R1、Qwen3）会先输出 ... 再给正式答案。
+// 这里截取最后一个 </think...> 之后的内容；若未闭合（被 token 上限截断）则原样返回。
+std::string stripThinking(std::string s) {
+    size_t cut = 0;
+    size_t p = s.rfind("</think");
+    if (p != std::string::npos) {
+        size_t gt = s.find('>', p);
+        if (gt != std::string::npos) cut = gt + 1;
+    }
+    if (cut > 0) s = s.substr(cut);
+    return s;
+}
+
 std::string trimResult(std::string s, const std::string& eos) {
+    s = stripThinking(std::move(s));
     if (!eos.empty()) {
         size_t pos = s.find(eos);
         if (pos != std::string::npos) s.erase(pos);
@@ -201,7 +216,8 @@ Java_com_example_qqaihelper_localllm_LocalLlmEngine_nativeChat(JNIEnv* env, jobj
         const std::string user = toUtf8(env, userMessage);
         const std::string prompt = buildPrompt(handle, system, user);
 
-        const int maxTokens = (maxNewTokens <= 0) ? 512 : static_cast<int>(maxNewTokens);
+        // 思考型模型需要更多 token 预算（思维链 + 答案）；默认放宽到 2048
+        const int maxTokens = (maxNewTokens <= 0) ? 2048 : static_cast<int>(maxNewTokens);
 
         std::lock_guard<std::mutex> lock(handle->mutex);
         std::ostringstream os;

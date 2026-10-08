@@ -25,7 +25,8 @@ class LocalLlmServer(
 
     companion object {
         private const val TAG = "LocalLlm"
-        private const val DEFAULT_MAX_TOKENS = 512
+        // 思考型模型（DeepSeek-R1 / Qwen3）需更多预算容纳思维链
+        private const val DEFAULT_MAX_TOKENS = 2048
         private const val MAX_BODY_CHARS = 64 * 1024
     }
 
@@ -56,7 +57,7 @@ class LocalLlmServer(
             ?: return json(Response.Status.BAD_REQUEST, error("缺少 messages 字段"))
 
         val maxTokens = root.optInt("max_tokens", DEFAULT_MAX_TOKENS)
-            .let { if (it in 1..4096) it else DEFAULT_MAX_TOKENS }
+            .let { if (it in 1..8192) it else DEFAULT_MAX_TOKENS }
 
         var system = ""
         var lastUser = ""
