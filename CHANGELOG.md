@@ -12,8 +12,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [未发布 / Unreleased]
 
+### 新增 / Added
+- **🧠 模型清单扩展至 6 个**：可选 Qwen2.5 0.5B / 1.5B / 3B、Qwen3 0.6B、MiniCPM4 0.5B、DeepSeek-R1 1.5B（均托管于 ModelScope 国内源，按体积升序排列）。
+- **❓ 模型选择指南**：下载对话框中新增「如何选择？」按钮，按手机内存给出推荐、逐条说明各模型特点与首次使用建议。
+
+### 优化 / Changed
+- **🔧 JNI 提示词模板可配置（去掉硬编码）**：`llm_jni.cpp` 不再写死 Qwen 格式，改为从插件 `config.json` 读取可选字段：
+  - `prompt_template`（含系统提示，占位符 `{system}` / `{user}`）
+  - `prompt_template_no_system`（不含系统提示，占位符 `{user}`）
+  - `eos_token`（结束标记，默认 `<|im_end|>`）
+  - 未提供时回退 Qwen2.5 ChatML 格式，保证旧插件完全兼容；不同对话格式的模型（如 DeepSeek 的 `<｜User｜>`）只需在插件中声明模板即可。
+
 ### 计划中 / Planned
-- 🤖 更多本地模型插件（不同尺寸 / 量化级别）
+- 🌐 远程模型清单（manifest），支持不更新 App 即可增减模型
 
 ---
 
