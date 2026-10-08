@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "updatedAt": "2026-10-09",
+  "note": "远程模型清单：更新此文件即可让 App 动态获取新模型，无需发版。",
+  "models": [
+    {
+      "id": "qwen2.5-0.5b-mnn",
+      "name": "Qwen2.5 0.5B（轻量·推荐）",
+      "description": "体积小、速度快，解析准确度尚可，适合低配手机或追求响应速度的场景。",
+      "url": "https://modelscope.cn/models/mfxq2l/qwen2.5-0.5B-mnn/resolve/master/qwen2.5-0.5b-mnn.zip",
+      "sizeBytes": 284537739,
+      "sha256": "3723fcfc3cd5379e494d7836e1d38efde472a484857eb1377070de6a4baedad4"
+    },
+    {
+      "id": "minicpm4-0.5b-mnn",
+      "name": "MiniCPM4 0.5B",
+      "description": "MiniCPM4-0.5B 的 MNN 模型，轻量快速，适合低配手机。",
+      "url": "https://modelscope.cn/models/mfxq2l/minicpm4-0.5B-mnn/resolve/master/minicpm4-0.5b-mnn.zip",
+      "sizeBytes": 311060063,
+      "sha256": "8dd289f7ac0c8ecd3f4e0b5be5d8e857b599c4da66c7b53a14a758f2af0098ae"
+    },
+    {
+      "id": "qwen3-0.6b-mnn",
+      "name": "Qwen3 0.6B",
+      "description": "Qwen3-0.6B 的 4bit 量化 MNN 模型，新一代架构，体积小、速度快。",
+      "url": "https://modelscope.cn/models/mfxq2l/qwen3-0.6B-mnn/resolve/master/qwen3-0.6b-mnn.zip",
+      "sizeBytes": 454471659,
+      "sha256": "e7cda3952cc42b3da8be629b4692282b8d6b4fb6033435230891b386399e1123"
+    },
+    {
+      "id": "qwen2.5-1.5b-mnn",
+      "name": "Qwen2.5 1.5B（均衡·推荐）",
+      "description": "通用中文小模型，解析准确度与体积较均衡，适合大多数场景。",
+      "url": "https://modelscope.cn/models/mfxq2l/qwen2.5-1.5B-mnn/resolve/master/qwen2.5-1.5b-mnn.zip",
+      "sizeBytes": 879616644,
+      "sha256": "0a1d3074acf5b6437d046b5f03cd57aeac6cad4cb16f09a0068a57ab62a2960a"
+    },
+    {
+      "id": "deepseek-r1-1.5b-mnn",
+      "name": "DeepSeek-R1 1.5B",
+      "description": "DeepSeek-R1-Distill-Qwen-1.5B 的 MNN 模型，具备推理链能力。",
+      "url": "https://modelscope.cn/models/mfxq2l/deepseek-r1-1.5B-mnn/resolve/master/deepseek-r1-1.5b-mnn.zip",
+      "sizeBytes": 1020641698,
+      "sha256": "e101b56a184442058c0b6191eeba1eac066dd3bec12819ce7e9668b30b2df3cc"
+    },
+    {
+      "id": "qwen2.5-3b-mnn",
+      "name": "Qwen2.5 3B（高质量）",
+      "description": "Qwen2.5-3B-Instruct 的 MNN 模型，能力更强，适合对解析质量要求高的场景（需较大内存）。",
+      "url": "https://modelscope.cn/models/mfxq2l/qwen2.5-3B-mnn/resolve/master/qwen2.5-3b-mnn.zip",
+      "sizeBytes": 1747152618,
+      "sha256": "3f821322ec5531f8d632bbf737f1deada53b3fd97bc82122cbbc86ba38df6447"
+    }
+  ]
+}

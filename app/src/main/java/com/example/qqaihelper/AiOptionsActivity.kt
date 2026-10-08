@@ -215,6 +215,7 @@ class AiOptionsActivity : BaseActivity() {
         refreshLocalStatus()
         rebuildPluginList()
         ModelDownloader.setListener(downloadListener)
+        refreshModelCatalog()
         // 恢复现场：若正在下载/已暂停，展示进度面板
         val st = ModelDownloader.currentState()
         if (st != ModelDownloader.State.IDLE && st != ModelDownloader.State.CANCELLED) {
@@ -393,6 +394,13 @@ class AiOptionsActivity : BaseActivity() {
     }
 
     // ==================== 模型下载 ====================
+
+    /** 后台刷新远程模型清单（失败静默，用缓存/内置兜底） */
+    private fun refreshModelCatalog() {
+        CoroutineScope(Dispatchers.IO).launch {
+            ModelCatalog.refresh(applicationContext)
+        }
+    }
 
     /** 弹出模型选择对话框（可扩展多模型，含选择指南） */
     private fun showModelPicker() {
