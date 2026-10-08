@@ -3,17 +3,17 @@
 // 本地大模型插件的 JNI 桥。把 MNN 的 LLM 引擎（libMNN.so 中的 MNN::Transformer::Llm）
 // 包装成 LocalLlmEngine.kt 里的 4 个 native 方法。
 //
-// 设计要点：
-// 1. 不使用 MNN 的 ChatMessages 模板机制。原因：本模型（Qwen2.5 旧版导出）config 里没有
-//    jinja chat_template，MNN 的 apply_chat_template 会退化成「直接拼接内容」，丢掉角色标记。
-//    因此我们在 C++ 侧按 Qwen2.5 官方格式手工拼 prompt，并在 config.json 里设置
-//    use_template=false，把原始 prompt 直接喂给引擎。
-// 2. 所有状态封装在 EngineHandle 里，指针以 jlong 交给 Kotlin 保存。
-// 3. 异常不允许穿过 JNI 边界（MNN 本身以 -fno-exceptions 编译，这里也保持防御式写法）。
+// 【提示词模板可配置】v1.2.3 起不再硬编码 Qwen 格式。
+// 插件包的 config.json 可选提供以下字段，以适配不同模型的对话格式：
+//   "prompt_template"           含系统提示的模板，占位符 {system} / {user}
+//   "prompt_template_no_system" 不含系统提示的模板，占位符 {user}
+//   "eos_token"                 结束标记（默认 "<|im_end|>"）
+// 若未提供，回退到 Qwen2.5 的 ChatML 格式（保证旧插件兼容）。
 
 #include <jni.h>
 #include <android/log.h>
 
+#include <fstream>
 #include <memory>
 #include <mutex>
 #include <sstream>
@@ -26,14 +26,25 @@
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
 using MNN::Transformer::Llm;
-using MNN::Transformer::ChatMessage;
-using MNN::Transformer::ChatMessages;
 
 namespace {
 
+// ---- 默认模板（Qwen2.5 ChatML），保证旧插件兼容 ----
+const char* kDefaultTplWithSystem =
+    "<|im_start|>system\n{system}<|im_end|>\n"
+    "<|im_start|>user\n{user}<|im_end|>\n"
+    "<|im_start|>assistant\n";
+const char* kDefaultTplNoSystem =
+    "<|im_start|>user\n{user}<|im_end|>\n"
+    "<|im_start|>assistant\n";
+const char* kDefaultEos = "<|im_end|>";
+
 struct EngineHandle {
     Llm* llm = nullptr;
-    std::mutex mutex;  // 串行化对同一 Llm 实例的访问
+    std::mutex mutex;
+    std::string tplWithSystem;
+    std::string tplNoSystem;
+    std::string eosToken;
 };
 
 std::string toUtf8(JNIEnv* env, jstring s) {
@@ -45,27 +56,68 @@ std::string toUtf8(JNIEnv* env, jstring s) {
     return result;
 }
 
-// 按 Qwen2.5 ChatML 格式拼接 prompt（system 可选）。
-std::string buildQwenPrompt(const std::string& system, const std::string& user) {
-    std::string p;
-    if (!system.empty()) {
-        p += "<|im_start|>system\n";
-        p += system;
-        p += "<|im_end|>\n";
+std::string readFile(const std::string& path) {
+    std::ifstream ifs(path, std::ios::binary);
+    if (!ifs) return std::string();
+    std::ostringstream os;
+    os << ifs.rdbuf();
+    return os.str();
+}
+
+// 从 JSON 文本中提取字符串字段（极简实现，足够解析 config.json）
+std::string jsonString(const std::string& json, const std::string& key) {
+    const std::string needle = "\"" + key + "\"";
+    size_t p = json.find(needle);
+    if (p == std::string::npos) return std::string();
+    p = json.find(':', p + needle.size());
+    if (p == std::string::npos) return std::string();
+    p = json.find('"', p + 1);
+    if (p == std::string::npos) return std::string();
+    std::string out;
+    for (size_t i = p + 1; i < json.size(); ++i) {
+        char c = json[i];
+        if (c == '\\' && i + 1 < json.size()) {
+            char n = json[i + 1];
+            switch (n) {
+                case 'n': out += '\n'; break;
+                case 't': out += '\t'; break;
+                case 'r': out += '\r'; break;
+                case '"': out += '"'; break;
+                case '\\': out += '\\'; break;
+                case '/': out += '/'; break;
+                default: out += n; break;
+            }
+            ++i;
+        } else if (c == '"') {
+            break;
+        } else {
+            out += c;
+        }
     }
-    p += "<|im_start|>user\n";
-    p += user;
-    p += "<|im_end|>\n";
-    p += "<|im_start|>assistant\n";
+    return out;
+}
+
+std::string replaceAll(std::string s, const std::string& from, const std::string& to) {
+    if (from.empty()) return s;
+    size_t p = 0;
+    while ((p = s.find(from, p)) != std::string::npos) {
+        s.replace(p, from.size(), to);
+        p += to.size();
+    }
+    return s;
+}
+
+std::string buildPrompt(const EngineHandle* h, const std::string& system, const std::string& user) {
+    const std::string& tpl = system.empty() ? h->tplNoSystem : h->tplWithSystem;
+    std::string p = replaceAll(tpl, "{system}", system);
+    p = replaceAll(p, "{user}", user);
     return p;
 }
 
-// 去掉模型可能带出的结束标记与首尾空白。
-std::string trimResult(std::string s) {
-    const std::string eos = "<|im_end|>";
-    size_t pos = s.find(eos);
-    if (pos != std::string::npos) {
-        s.erase(pos);
+std::string trimResult(std::string s, const std::string& eos) {
+    if (!eos.empty()) {
+        size_t pos = s.find(eos);
+        if (pos != std::string::npos) s.erase(pos);
     }
     const char* ws = " \t\r\n";
     size_t begin = s.find_first_not_of(ws);
@@ -92,6 +144,21 @@ Java_com_example_qqaihelper_localllm_LocalLlmEngine_nativeCreate(JNIEnv* env, jo
         }
         auto* handle = new EngineHandle();
         handle->llm = llm;
+        handle->tplWithSystem = kDefaultTplWithSystem;
+        handle->tplNoSystem = kDefaultTplNoSystem;
+        handle->eosToken = kDefaultEos;
+
+        std::string cfg = readFile(path);
+        if (!cfg.empty()) {
+            std::string t1 = jsonString(cfg, "prompt_template");
+            std::string t2 = jsonString(cfg, "prompt_template_no_system");
+            std::string eos = jsonString(cfg, "eos_token");
+            if (!t1.empty()) handle->tplWithSystem = t1;
+            if (!t2.empty()) handle->tplNoSystem = t2;
+            if (!eos.empty()) handle->eosToken = eos;
+            LOGI("nativeCreate: 模板已加载 (with_system=%d, no_system=%d, eos=%s)",
+                 (int)!t1.empty(), (int)!t2.empty(), handle->eosToken.c_str());
+        }
         LOGI("nativeCreate: 引擎句柄已创建，config=%s", path.c_str());
         return reinterpret_cast<jlong>(handle);
     } catch (const std::exception& e) {
@@ -132,18 +199,16 @@ Java_com_example_qqaihelper_localllm_LocalLlmEngine_nativeChat(JNIEnv* env, jobj
     try {
         const std::string system = toUtf8(env, systemPrompt);
         const std::string user = toUtf8(env, userMessage);
-        const std::string prompt = buildQwenPrompt(system, user);
+        const std::string prompt = buildPrompt(handle, system, user);
 
         const int maxTokens = (maxNewTokens <= 0) ? 512 : static_cast<int>(maxNewTokens);
 
         std::lock_guard<std::mutex> lock(handle->mutex);
         std::ostringstream os;
-        // 每次请求都清空 KV / 历史，保证消息之间互不串扰。
         handle->llm->reset();
-        // use_template=false（见 config.json）：传入的是已经成型 Qwen prompt，直接推理。
-        handle->llm->response(prompt, &os, "<|im_end|>", maxTokens);
+        handle->llm->response(prompt, &os, handle->eosToken.c_str(), maxTokens);
 
-        const std::string text = trimResult(os.str());
+        const std::string text = trimResult(os.str(), handle->eosToken);
         LOGI("nativeChat: 输入 %zu 字，输出 %zu 字", user.size(), text.size());
         return env->NewStringUTF(text.c_str());
     } catch (const std::exception& e) {
