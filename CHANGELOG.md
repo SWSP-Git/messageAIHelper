@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [未发布 / Unreleased]
 
 ### 新增 / Added
+- **🌐 远程模型清单（重要）**：模型清单支持**远程动态更新**——维护者只需修改仓库根目录的 `models.json`，App 即可获取新模型，**无需发版**。三级来源（远程 → 本地缓存 → 内置兜底），多候选地址（ModelScope 优先，GitHub 镜像兜底），缓存 6 小时，离线可用。
 - **🧠 模型清单扩展至 6 个**：可选 Qwen2.5 0.5B / 1.5B / 3B、Qwen3 0.6B、MiniCPM4 0.5B、DeepSeek-R1 1.5B（均托管于 ModelScope 国内源，按体积升序排列）。
 - **❓ 模型选择指南**：下载对话框中新增「如何选择？」按钮，按手机内存给出推荐、逐条说明各模型特点与首次使用建议。
 
@@ -24,7 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - 未提供时回退 Qwen2.5 ChatML 格式，保证旧插件完全兼容；不同对话格式的模型（如 DeepSeek 的 `<｜User｜>`）只需在插件中声明模板即可。
 
 ### 计划中 / Planned
-- 🌐 远程模型清单（manifest），支持不更新 App 即可增减模型
+- 🤖 更多本地模型插件（不同尺寸 / 量化级别）
 
 ---
 
